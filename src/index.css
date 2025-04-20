@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+/* Utility classes for responsive typography */
+.text-responsive-xs {
+  @apply text-[10px] sm:text-xs;
+}
+
+.text-responsive-sm {
+  @apply text-xs sm:text-sm;
+}
+
+.text-responsive-base {
+  @apply text-sm sm:text-base;
+}
+
+.text-responsive-lg {
+  @apply text-base sm:text-lg;
+}
+
+.text-responsive-xl {
+  @apply text-lg sm:text-xl;
+}
+
+.text-responsive-2xl {
+  @apply text-xl sm:text-2xl;
+}
+
+/* Utility classes for responsive spacing */
+.p-responsive-sm {
+  @apply p-2 sm:p-4;
+}
+
+.p-responsive-md {
+  @apply p-3 sm:p-6;
+}
+
+.p-responsive-lg {
+  @apply p-4 sm:p-8;
+}
+
+.py-responsive-sm {
+  @apply py-1 sm:py-2;
+}
+
+.py-responsive-md {
+  @apply py-2 sm:py-4;
+}
+
+.px-responsive-sm {
+  @apply px-2 sm:px-4;
+}
+
+.px-responsive-md {
+  @apply px-3 sm:px-6;
+}
+
+.m-responsive-sm {
+  @apply m-2 sm:m-4;
+}
+
+.m-responsive-md {
+  @apply m-3 sm:m-6;
+}
+
+.m-responsive-lg {
+  @apply m-4 sm:m-8;
+}
+
+/* Media query helper classes */
+.mobile-only {
+  @apply block sm:hidden;
+}
+
+.tablet-up {
+  @apply hidden sm:block;
+}
+
+.desktop-up {
+  @apply hidden lg:block;
+}
+
+/* Responsive grid layouts */
+.grid-responsive-2 {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+}
+
+.grid-responsive-3 {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+.grid-responsive-4 {
+  @apply grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4;
+}
+
+/* Improved focus styles for accessibility */
+:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Smoother transitions */
+.transition-standard {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Fix for mobile Safari 100vh issue */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Hide scrollbar but allow scrolling */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive table styles */
+.table-responsive {
+  @apply w-full overflow-x-auto -mx-4 sm:mx-0 pb-2;
+}
+
+.table-responsive table {
+  @apply min-w-full;
+}
+
+.table-responsive th {
+  @apply px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.table-responsive td {
+  @apply px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    font-size: 12pt;
+    color: #000;
+    background-color: #fff;
+  }
+}
