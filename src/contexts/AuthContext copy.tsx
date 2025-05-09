@@ -266,8 +266,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // localStorage.removeItem('currentUser');
     // setState(initialUser);
     dispatch(setUserInfo(initialUser))
-    // window.location.reload();
-    window.location.href = '/login';
   };
 
   return (

@@ -1,6 +1,6 @@
 export enum DoctorSpecialty {
-  GENERAL = "Généraliste",
-  SPECIALIST = "Spécialiste"
+  GENERAL = "GENERALISTE",
+  SPECIALIST = "SPECIALISTE"
 }
 
 export enum SpecialistType {
@@ -15,27 +15,38 @@ export enum SpecialistType {
   OTHER = "Autre"
 }
 
-export interface Person {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  phoneNumber: string;
-  email: string;
-  address: string;
+export interface Utilisateur {
+  idUtilisateur: string;
+  nomUtilisateur: string;
+  prenomUtilisateur: string;
+  telephoneUtilisateur: string;
 }
 
-export interface Patient extends Person {
-  socialSecurityNumber: string;
-  primaryDoctorId: string | null; // null if not assigned
+interface RootObject {
+  idUtilisateur: number;
+  nomUtilisateur: string;
+  prenomUtilisateur: string;
+  telephoneUtilisateur: string;
+  adressePatient: string;
+  ethniePatient: string;
+  dateNaisPatient: string;
+  sexePatient: string;
+  groupeSanguinPatient: string;
 }
 
-export interface Doctor extends Person {
-  licenseNumber: string;
-  specialty: DoctorSpecialty;
-  specialistType?: SpecialistType; // only if specialty is SPECIALIST
-  isAlsoPatient: boolean; // true if doctor is also a patient
-  patientId?: string; // only if isAlsoPatient is true
+export interface Patient extends Utilisateur {
+  idPatient: string;
+  adressePatient: string;
+  ethniePatient: string;
+  dateNaisPatient: Date;
+  sexePatient: string;
+  groupeSanguinPatient: string;
+}
+
+export interface Doctor extends Utilisateur {
+  idPersSoignant: string;
+  typePersSoignant: string;
+  specPersSoignant: string; // only if specialty is SPECIALIST
 }
 
 export interface Consultation {
@@ -49,6 +60,75 @@ export interface Consultation {
   reimbursementStatus: ReimbursementStatus;
   reimbursementAmount: number | null;
   reimbursementDate: string | null;
+}
+
+export interface Constantes {
+  tension: string;
+  temperature: string;
+}
+
+export interface DocumentConsultation {
+  type: string;
+  filename: string;
+  // ajoutez d'autres champs si nécessaire, ex: url, dateAjout, etc.
+}
+
+// Détail d’une seule consultation, noms de champs inchangés
+
+export interface PatientConsultations {
+  idPatient: number;
+  adressePatient: string;
+  ethniePatient: string;
+  dateNaisPatient: string;
+  sexePatient: string;
+  groupeSanguinPatient: string;
+  nomPatient: string;
+  prenomPatient: string;
+  telephonePatient: string;
+  idConsultation: number;
+  motifConsultation: string;
+  constantes: Constantes;
+  detailConsultation: string;
+  ordonnance: string;
+  documentsConsultations: DocumentsConsultation[];
+  dateConsultation: string;
+  nomSoignant: string;
+  prenomSoignant: string;
+  telephoneSoignant: string;
+}
+
+interface DocumentsConsultation {
+  type: string;
+  filename: string;
+}
+
+export interface PatientAvecConsultations {
+  idPatient: number;
+  adressePatient: string;
+  ethniePatient: string;
+  dateNaisPatient: Date;
+  sexePatient: 'M' | 'F';
+  groupeSanguinPatient: string;
+  nomPatient: string;
+  prenomPatient: string;
+  telephonePatient: string;
+  consultations: ConsultationRegroupee[];
+}
+
+export interface ConsultationRegroupee {
+  idConsultation: number;
+  motifConsultation: string;
+  constantes: Constantes | null;
+  detailConsultation: string;
+  ordonnance: string;
+  documentsConsultations: DocumentConsultation[];
+  dateConsultation: Date;
+  nomSoignant: string;
+  prenomSoignant: string;
+  telephoneSoignant: string;
+  nomPatient: string;
+  prenomPatient: string;
+  telephonePatient: string;
 }
 
 export interface SpecialistReferral {
@@ -94,21 +174,35 @@ export enum ReimbursementStatus {
   COMPLETED = "Remboursé"
 }
 
+// export interface User {
+//   id: string;
+//   username: string;
+//   email: string;
+//   role: UserRole;
+//   doctorId?: string; // For doctors
+//   profilePicture?: string; // URL to profile picture
+//   phoneNumber: string; // Added phoneNumber field
+// }
+
 export interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: UserRole;
-  doctorId?: string; // For doctors
-  profilePicture?: string; // URL to profile picture
-  phoneNumber: string; // Added phoneNumber field
+  idUtilisateur: number;
+  nomUtilisateur: string;
+  prenomUtilisateur: string;
+  telephoneUtilisateur: string;
+  typeUtilisateur: UserRole;
+  adressePatient: string;
+  ethniePatient: string;
+  dateNaisPatient: string;
+  sexePatient: string;
+  groupeSanguinPatient: string;
+  typePersSoignant: null;
+  specPersSoignant: null;
 }
 
 export enum UserRole {
   ADMIN = "ADMIN",
-  DOCTOR = "DOCTOR",
+  DOCTOR = "PERSONNEL_SOIGNANT",
   PATIENT = "PATIENT",
-  SOCIAL_SECURITY_AGENT = "SOCIAL_SECURITY_AGENT"
 }
 
 export enum AuthStep {
@@ -117,7 +211,7 @@ export enum AuthStep {
   COMPLETED = "COMPLETED"
 }
 
-export interface AuthState {
+export interface UserInfo {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -155,4 +249,25 @@ export interface PatientChild {
   patientId: string;
   childPatientId: string;
   relationship: string;
+}
+
+// Interface adaptée selon le schéma Zod attendu par le backend
+export interface ConsultationBackendPayload {
+  idPatient: number;
+  idPersSoignant: number;
+  motifConsultation: string;
+  constantes?: {
+    temperature?: number;
+    tension?: {
+      systolique?: number;
+      diastolique?: number;
+    };
+  };
+  detailConsultation: string;
+  ordonnance: string;
+  documentsConsultations?: Array<{
+    type: string;
+    url: string;
+    data?: string;
+  }>;
 }

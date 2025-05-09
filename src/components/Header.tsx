@@ -10,7 +10,7 @@ import {
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { Menu, Transition } from '@headlessui/react';
 import { useAuth } from '../contexts/AuthContext';
-
+import lomekoLogo from '/lomeko.png';
 const Header = () => {
   const { user, logout } = useAuth();
   const [notificationsCount] = useState(3); // Hardcoded for demo
@@ -27,13 +27,14 @@ const Header = () => {
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
       <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6">
         <div className="flex justify-between h-14 sm:h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-base sm:text-xl font-bold text-blue-700 truncate">
-                Lomeko Santé
-              </Link>
-            </div>
-          </div>
+          <Link to="/" className="flex items-center">
+            <img
+              src={lomekoLogo} // <-- remplace ceci par le chemin réel de ton image
+              alt="Lomeko Santé"
+              className="h-10 sm:h-14 w-auto"
+            />
+          </Link>
+
 
           <div className="flex items-center space-x-1 sm:space-x-3">
             {user && (
@@ -55,7 +56,7 @@ const Header = () => {
                   <span className="sr-only">Voir les notifications</span>
                   <BellIcon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
                   {notificationsCount > 0 && (
-                    <span className="absolute top-0 right-0 block h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-red-500 text-white text-[10px] sm:text-xs font-medium flex items-center justify-center transform -translate-y-1/4 translate-x-1/4">
+                    <span className="absolute top-0 right-0  h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-red-500 text-white text-[10px] sm:text-xs font-medium flex items-center justify-center transform -translate-y-1/4 translate-x-1/4">
                       {notificationsCount}
                     </span>
                   )}
@@ -77,22 +78,14 @@ const Header = () => {
                       <span className="sr-only">Ouvrir le menu utilisateur</span>
                       <div className="flex items-center">
                         <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                          {user.profilePicture ? (
-                            <img
-                              className="h-full w-full object-cover"
-                              src={user.profilePicture}
-                              alt={user.username || 'Profile'}
-                            />
-                          ) : (
-                            <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
-                          )}
+                          <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                         </div>
                         <div className="ml-2 hidden md:flex flex-col items-start">
                           <span className="text-xs sm:text-sm font-medium text-gray-700">
-                            {user.username}
+                            {user.nomUtilisateur}
                           </span>
                           <span className="text-[10px] sm:text-xs text-gray-500 uppercase">
-                            {user.role}
+                            {user.typeUtilisateur}
                           </span>
                         </div>
                         <ChevronDownIcon className="ml-1 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" aria-hidden="true" />
@@ -115,7 +108,7 @@ const Header = () => {
                             to="/profile"
                             className={classNames(
                               active ? 'bg-gray-100' : '',
-                              'block px-4 py-2 text-xs sm:text-sm text-gray-700 flex items-center'
+                              ' px-4 py-2 text-xs sm:text-sm text-gray-700 flex items-center'
                             )}
                           >
                             <UserIcon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" aria-hidden="true" />
@@ -129,7 +122,7 @@ const Header = () => {
                             onClick={handleLogout}
                             className={classNames(
                               active ? 'bg-gray-100' : '',
-                              'block w-full text-left px-4 py-2 text-xs sm:text-sm text-gray-700 flex items-center'
+                              ' w-full text-left px-4 py-2 text-xs sm:text-sm text-gray-700 flex items-center'
                             )}
                           >
                             <ArrowRightOnRectangleIcon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" aria-hidden="true" />

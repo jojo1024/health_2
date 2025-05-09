@@ -30,8 +30,8 @@ const NavItem = ({ to, label, icon, isActive, onClick }: NavItemProps) => (
   <Link
     to={to}
     className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors ${isActive
-        ? 'bg-blue-100 text-blue-700'
-        : 'hover:bg-gray-100'
+      ? 'bg-blue-100 text-blue-700'
+      : 'hover:bg-gray-100'
       }`}
     onClick={onClick}
   >
@@ -63,15 +63,13 @@ const Layout = ({ children }: LayoutProps) => {
   const getSectionTitle = () => {
     if (!user) return "Lomeko Santé";
 
-    switch (user.role) {
+    switch (user.typeUtilisateur) {
       case UserRole.ADMIN:
         return "Administration";
       case UserRole.DOCTOR:
         return "Espace Médecin";
       case UserRole.PATIENT:
         return "Espace Patient";
-      case UserRole.SOCIAL_SECURITY_AGENT:
-        return "Sécurité Sociale";
       default:
         return "Lomeko Santé";
     }
@@ -131,7 +129,8 @@ const Layout = ({ children }: LayoutProps) => {
             />
 
             {/* Navigation conditionnelle en fonction du rôle */}
-            {user?.role === UserRole.ADMIN && (
+
+            {user?.typeUtilisateur === UserRole.ADMIN && (
               <>
                 {permissions.canViewPatients && (
                   <NavItem
@@ -139,6 +138,15 @@ const Layout = ({ children }: LayoutProps) => {
                     label="Patients"
                     icon={<UserGroupIcon />}
                     isActive={path.startsWith('/patients')}
+                    onClick={closeSidebar}
+                  />
+                )}
+                {permissions.canViewPatients && (
+                  <NavItem
+                    to="/consultations"
+                    label="Consultations"
+                    icon={<ShieldCheckIcon />}
+                    isActive={path.startsWith('/consultations')}
                     onClick={closeSidebar}
                   />
                 )}
@@ -151,37 +159,10 @@ const Layout = ({ children }: LayoutProps) => {
                     onClick={closeSidebar}
                   />
                 )}
-                {permissions.canViewConsultations && (
-                  <NavItem
-                    to="/consultations"
-                    label="Consultations"
-                    icon={<ClipboardDocumentListIcon />}
-                    isActive={path.startsWith('/consultations')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                {permissions.canViewPrescriptions && (
-                  <NavItem
-                    to="/prescriptions"
-                    label="Prescriptions"
-                    icon={<DocumentTextIcon />}
-                    isActive={path.startsWith('/prescriptions')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                {permissions.canViewReimbursements && (
-                  <NavItem
-                    to="/reimbursements"
-                    label="Remboursements"
-                    icon={<ClockIcon />}
-                    isActive={path.startsWith('/reimbursements')}
-                    onClick={closeSidebar}
-                  />
-                )}
               </>
             )}
 
-            {user?.role === UserRole.DOCTOR && (
+            {user?.typeUtilisateur === UserRole.DOCTOR && (
               <>
                 {permissions.canViewPatients && (
                   <NavItem
@@ -192,52 +173,20 @@ const Layout = ({ children }: LayoutProps) => {
                     onClick={closeSidebar}
                   />
                 )}
-                {permissions.canViewConsultations && (
+                {permissions.canViewPatients && (
                   <NavItem
                     to="/doctor/consultations"
                     label="Mes Consultations"
-                    icon={<ClipboardDocumentListIcon />}
+                    icon={<UserGroupIcon />}
                     isActive={path.startsWith('/doctor/consultations')}
                     onClick={closeSidebar}
                   />
                 )}
-                {permissions.canViewPrescriptions && (
-                  <NavItem
-                    to="/doctor/prescriptions"
-                    label="Mes Prescriptions"
-                    icon={<DocumentTextIcon />}
-                    isActive={path.startsWith('/doctor/prescriptions')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                {permissions.canRequestPatientAccess && (
-                  <NavItem
-                    to="/doctor/request-access"
-                    label="Demander Accès"
-                    icon={<ShieldCheckIcon />}
-                    isActive={path.startsWith('/doctor/request-access')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                <NavItem
-                  to="/doctor/appointments"
-                  label="Rendez-vous"
-                  icon={<CalendarIcon />}
-                  isActive={path.startsWith('/doctor/appointments')}
-                  onClick={closeSidebar}
-                />
               </>
             )}
 
-            {user?.role === UserRole.PATIENT && (
+            {user?.typeUtilisateur === UserRole.PATIENT && (
               <>
-                <NavItem
-                  to="/patient/profile"
-                  label="Mon Profil"
-                  icon={<UserIcon />}
-                  isActive={path.startsWith('/patient/profile')}
-                  onClick={closeSidebar}
-                />
                 {permissions.canViewConsultations && (
                   <NavItem
                     to="/patient/consultations"
@@ -247,32 +196,9 @@ const Layout = ({ children }: LayoutProps) => {
                     onClick={closeSidebar}
                   />
                 )}
-                {permissions.canViewPrescriptions && (
-                  <NavItem
-                    to="/patient/prescriptions"
-                    label="Mes Prescriptions"
-                    icon={<DocumentTextIcon />}
-                    isActive={path.startsWith('/patient/prescriptions')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                {permissions.canViewReimbursements && (
-                  <NavItem
-                    to="/patient/reimbursements"
-                    label="Mes Remboursements"
-                    icon={<ClockIcon />}
-                    isActive={path.startsWith('/patient/reimbursements')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                <NavItem
-                  to="/patient/appointments"
-                  label="Mes Rendez-vous"
-                  icon={<CalendarIcon />}
-                  isActive={path.startsWith('/patient/appointments')}
-                  onClick={closeSidebar}
-                />
-                {permissions.canManageChildren && (
+
+
+                {/* {permissions.canManageChildren && (
                   <NavItem
                     to="/patient/children"
                     label="Mes Enfants"
@@ -280,50 +206,10 @@ const Layout = ({ children }: LayoutProps) => {
                     isActive={path.startsWith('/patient/children')}
                     onClick={closeSidebar}
                   />
-                )}
+                )} */}
               </>
             )}
 
-            {user?.role === UserRole.SOCIAL_SECURITY_AGENT && (
-              <>
-                {permissions.canViewPatients && (
-                  <NavItem
-                    to="/agent/patients"
-                    label="Patients"
-                    icon={<UserGroupIcon />}
-                    isActive={path.startsWith('/agent/patients')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                {permissions.canViewDoctors && (
-                  <NavItem
-                    to="/agent/doctors"
-                    label="Médecins"
-                    icon={<UserIcon />}
-                    isActive={path.startsWith('/agent/doctors')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                {permissions.canViewConsultations && (
-                  <NavItem
-                    to="/agent/consultations"
-                    label="Consultations"
-                    icon={<ClipboardDocumentListIcon />}
-                    isActive={path.startsWith('/agent/consultations')}
-                    onClick={closeSidebar}
-                  />
-                )}
-                {permissions.canProcessReimbursements && (
-                  <NavItem
-                    to="/agent/reimbursements"
-                    label="Remboursements"
-                    icon={<ClockIcon />}
-                    isActive={path.startsWith('/agent/reimbursements')}
-                    onClick={closeSidebar}
-                  />
-                )}
-              </>
-            )}
           </nav>
 
           <div className="pt-4 mt-4 sm:pt-6 sm:mt-6 border-t">

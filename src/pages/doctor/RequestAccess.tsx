@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
-import { AuthorizationService } from '../../services/authorizationService';
+// import { AuthorizationService } from '../../services/authorizationService';
 
 const RequestAccess = () => {
   const { user } = useAuth();
@@ -15,62 +15,62 @@ const RequestAccess = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [step, setStep] = useState<'request' | 'verify'>('request');
 
-  const handleRequestAccess = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user?.doctorId) {
-      setError("Vous n'êtes pas identifié comme médecin.");
-      return;
-    }
+  // const handleRequestAccess = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!user?.doctorId) {
+  //     setError("Vous n'êtes pas identifié comme médecin.");
+  //     return;
+  //   }
 
-    setLoading(true);
-    setError(null);
-    setMessage(null);
+  //   setLoading(true);
+  //   setError(null);
+  //   setMessage(null);
 
-    try {
-      const result = await AuthorizationService.requestAuthorization(user.doctorId, phoneNumber);
-      if (result.success) {
-        setMessage(result.message);
-        if (result.authorizationId) {
-          setAuthorizationId(result.authorizationId);
-          setStep('verify');
-        }
-      } else {
-        setError(result.message);
-      }
-    } catch (err) {
-      setError("Une erreur est survenue lors de la demande d'accès.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   try {
+  //     const result = await AuthorizationService.requestAuthorization(user.doctorId, phoneNumber);
+  //     if (result.success) {
+  //       setMessage(result.message);
+  //       if (result.authorizationId) {
+  //         setAuthorizationId(result.authorizationId);
+  //         setStep('verify');
+  //       }
+  //     } else {
+  //       setError(result.message);
+  //     }
+  //   } catch (err) {
+  //     setError("Une erreur est survenue lors de la demande d'accès.");
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authorizationId) {
-      setError("ID d'autorisation manquant.");
-      return;
-    }
+  // const handleVerifyCode = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!authorizationId) {
+  //     setError("ID d'autorisation manquant.");
+  //     return;
+  //   }
 
-    setLoading(true);
-    setError(null);
-    setMessage(null);
+  //   setLoading(true);
+  //   setError(null);
+  //   setMessage(null);
 
-    try {
-      const result = await AuthorizationService.verifyAuthorizationCode(authorizationId, verificationCode);
-      if (result.success) {
-        setMessage(result.message);
-        setSuccess(true);
-      } else {
-        setError(result.message);
-      }
-    } catch (err) {
-      setError("Une erreur est survenue lors de la vérification du code.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   try {
+  //     const result = await AuthorizationService.verifyAuthorizationCode(authorizationId, verificationCode);
+  //     if (result.success) {
+  //       setMessage(result.message);
+  //       setSuccess(true);
+  //     } else {
+  //       setError(result.message);
+  //     }
+  //   } catch (err) {
+  //     setError("Une erreur est survenue lors de la vérification du code.");
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const resetForm = () => {
     setPhoneNumber('');
@@ -117,7 +117,7 @@ const RequestAccess = () => {
           </div>
         ) : (
           step === 'request' ? (
-            <form onSubmit={handleRequestAccess}>
+            <form >
               <div className="mb-4">
                 <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
                   Numéro de téléphone du patient
@@ -147,7 +147,7 @@ const RequestAccess = () => {
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleVerifyCode}>
+            <form >
               <div className="mb-4">
                 <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-1">
                   Code de vérification

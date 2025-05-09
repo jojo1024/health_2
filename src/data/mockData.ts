@@ -106,144 +106,9 @@ if (typeof window !== 'undefined') {
   localStorage.setItem('defaultPatientId', patientId1);
 }
 
-// Define mock doctors
-export const doctors: Doctor[] = [
-  {
-    id: doctorId1,
-    firstName: 'Jean',
-    lastName: 'Dupont',
-    dateOfBirth: format(subYears(new Date(), 45), 'yyyy-MM-dd'),
-    phoneNumber: '0123456789',
-    email: 'jean.dupont@exemple.fr',
-    address: '15 rue de la Médecine, 75001 Paris',
-    licenseNumber: 'MD12345',
-    specialty: DoctorSpecialty.GENERAL,
-    isAlsoPatient: false
-  },
-  {
-    id: doctorId2,
-    firstName: 'Marie',
-    lastName: 'Laurent',
-    dateOfBirth: format(subYears(new Date(), 38), 'yyyy-MM-dd'),
-    phoneNumber: '0123456790',
-    email: 'marie.laurent@exemple.fr',
-    address: '25 avenue de la Santé, 75008 Paris',
-    licenseNumber: 'MD67890',
-    specialty: DoctorSpecialty.SPECIALIST,
-    specialistType: SpecialistType.CARDIOLOGY,
-    isAlsoPatient: true,
-    patientId: patientId5
-  },
-  {
-    id: doctorId3,
-    firstName: 'Pierre',
-    lastName: 'Martin',
-    dateOfBirth: format(subYears(new Date(), 52), 'yyyy-MM-dd'),
-    phoneNumber: '0123456791',
-    email: 'pierre.martin@exemple.fr',
-    address: '8 rue des Soins, 75015 Paris',
-    licenseNumber: 'MD24680',
-    specialty: DoctorSpecialty.SPECIALIST,
-    specialistType: SpecialistType.DERMATOLOGY,
-    isAlsoPatient: false
-  },
-  {
-    id: doctorId4,
-    firstName: 'Sophie',
-    lastName: 'Bernard',
-    dateOfBirth: format(subYears(new Date(), 41), 'yyyy-MM-dd'),
-    phoneNumber: '0123456792',
-    email: 'sophie.bernard@exemple.fr',
-    address: '42 boulevard Médical, 75006 Paris',
-    licenseNumber: 'MD13579',
-    specialty: DoctorSpecialty.GENERAL,
-    isAlsoPatient: true,
-    patientId: patientId6
-  },
-  {
-    id: doctorId5,
-    firstName: 'Michel',
-    lastName: 'Petit',
-    dateOfBirth: format(subYears(new Date(), 60), 'yyyy-MM-dd'),
-    phoneNumber: '0123456793',
-    email: 'michel.petit@exemple.fr',
-    address: '5 place de la Clinique, 75016 Paris',
-    licenseNumber: 'MD97531',
-    specialty: DoctorSpecialty.SPECIALIST,
-    specialistType: SpecialistType.OPHTHALMOLOGY,
-    isAlsoPatient: false
-  }
-];
 
-// Define mock patients
-export const patients: Patient[] = [
-  {
-    id: patientId1,
-    firstName: 'Lucie',
-    lastName: 'Dubois',
-    dateOfBirth: format(subYears(new Date(), 35), 'yyyy-MM-dd'),
-    phoneNumber: '0678901234',
-    email: 'lucie.dubois@exemple.fr',
-    address: '10 rue du Patient, 75010 Paris',
-    socialSecurityNumber: '1850123456789',
-    primaryDoctorId: doctorId1
-  },
-  {
-    id: patientId2,
-    firstName: 'Thomas',
-    lastName: 'Moreau',
-    dateOfBirth: format(subYears(new Date(), 42), 'yyyy-MM-dd'),
-    phoneNumber: '0678901235',
-    email: 'thomas.moreau@exemple.fr',
-    address: '22 avenue de l\'Assuré, 75011 Paris',
-    socialSecurityNumber: '1780987654321',
-    primaryDoctorId: doctorId1
-  },
-  {
-    id: patientId3,
-    firstName: 'Camille',
-    lastName: 'Leroy',
-    dateOfBirth: format(subYears(new Date(), 28), 'yyyy-MM-dd'),
-    phoneNumber: '0678901236',
-    email: 'camille.leroy@exemple.fr',
-    address: '7 rue de la Santé, 75005 Paris',
-    socialSecurityNumber: '1930123456789',
-    primaryDoctorId: doctorId4
-  },
-  {
-    id: patientId4,
-    firstName: 'Antoine',
-    lastName: 'Girard',
-    dateOfBirth: format(subYears(new Date(), 50), 'yyyy-MM-dd'),
-    phoneNumber: '0678901237',
-    email: 'antoine.girard@exemple.fr',
-    address: '18 boulevard des Malades, 75009 Paris',
-    socialSecurityNumber: '1700123456789',
-    primaryDoctorId: null
-  },
-  {
-    id: patientId5, // This is also a doctor (doctorId2)
-    firstName: 'Marie',
-    lastName: 'Laurent',
-    dateOfBirth: format(subYears(new Date(), 38), 'yyyy-MM-dd'),
-    phoneNumber: '0123456790',
-    email: 'marie.laurent@exemple.fr',
-    address: '25 avenue de la Santé, 75008 Paris',
-    socialSecurityNumber: '1820123456789',
-    primaryDoctorId: doctorId1
-  },
-  {
-    id: patientId6, // This is also a doctor (doctorId4)
-    firstName: 'Sophie',
-    lastName: 'Bernard',
-    dateOfBirth: format(subYears(new Date(), 41), 'yyyy-MM-dd'),
-    phoneNumber: '0123456792',
-    email: 'sophie.bernard@exemple.fr',
-    address: '42 boulevard Médical, 75006 Paris',
-    socialSecurityNumber: '1800123456789',
-    primaryDoctorId: doctorId1
-  }
-];
+
+
 
 // Define relationships between patients (parent-child)
 export const patientRelationships: PatientChild[] = [
@@ -486,73 +351,81 @@ export const consultations: Consultation[] = [
 ];
 
 // Mock users for authentication
-export const users: User[] = [
-  {
-    id: uuidv4(),
-    username: 'admin',
-    email: 'admin@securite-sociale.fr',
-    role: UserRole.ADMIN,
-    profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg',
-    phoneNumber: '0611223344' // Added phone number
-  },
-  {
-    id: uuidv4(),
-    username: 'agent',
-    email: 'agent@securite-sociale.fr',
-    role: UserRole.SOCIAL_SECURITY_AGENT,
-    profilePicture: 'https://randomuser.me/api/portraits/women/2.jpg',
-    phoneNumber: '0622334455' // Added phone number
-  },
-  {
-    id: uuidv4(),
-    username: 'jdupont',
-    email: 'jean.dupont@exemple.fr',
-    role: UserRole.DOCTOR,
-    doctorId: doctorId1,
-    profilePicture: 'https://randomuser.me/api/portraits/men/3.jpg',
-    phoneNumber: '0123456789' // Using doctor's phone number
-  },
-  {
-    id: uuidv4(),
-    username: 'mlaurent',
-    email: 'marie.laurent@exemple.fr',
-    role: UserRole.DOCTOR,
-    doctorId: doctorId2,
-    profilePicture: 'https://randomuser.me/api/portraits/women/4.jpg',
-    phoneNumber: '0123456790' // Using doctor's phone number
-  },
-  {
-    id: uuidv4(),
-    username: 'sbernard',
-    email: 'sophie.bernard@exemple.fr',
-    role: UserRole.DOCTOR,
-    doctorId: doctorId4,
-    profilePicture: 'https://randomuser.me/api/portraits/women/5.jpg',
-    phoneNumber: '0123456792' // Using doctor's phone number
-  },
-  // Nouveaux utilisateurs patients
-  {
-    id: uuidv4(),
-    username: 'ldubois',
-    email: 'lucie.dubois@exemple.fr',
-    role: UserRole.PATIENT,
-    profilePicture: 'https://randomuser.me/api/portraits/women/6.jpg',
-    phoneNumber: '0678901234' // Using patient's phone number
-  },
-  {
-    id: uuidv4(),
-    username: 'tmoreau',
-    email: 'thomas.moreau@exemple.fr',
-    role: UserRole.PATIENT,
-    profilePicture: 'https://randomuser.me/api/portraits/men/7.jpg',
-    phoneNumber: '0678901235' // Using patient's phone number
-  },
-  {
-    id: uuidv4(),
-    username: 'cleroy',
-    email: 'camille.leroy@exemple.fr',
-    role: UserRole.PATIENT,
-    profilePicture: 'https://randomuser.me/api/portraits/women/8.jpg',
-    phoneNumber: '0678901236' // Using patient's phone number
-  }
-];
+// export const users: User[] = [
+//   {
+//     id: uuidv4(),
+//     username: 'Joel',
+//     email: 'admin@securite-sociale.fr',
+//     role: UserRole.ADMIN,
+//     profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg',
+//     phoneNumber: '2250565356400' // Added phone number
+//   },
+//   {
+//     id: uuidv4(),
+//     username: 'M. Youssouf B.',
+//     email: 'admin@securite-sociale.fr',
+//     role: UserRole.ADMIN,
+//     profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg',
+//     phoneNumber: '2250506135567' // Added phone number
+//   },
+//   {
+//     id: uuidv4(),
+//     username: 'agent',
+//     email: 'agent@securite-sociale.fr',
+//     role: UserRole.SOCIAL_SECURITY_AGENT,
+//     profilePicture: 'https://randomuser.me/api/portraits/women/2.jpg',
+//     phoneNumber: '0622334455' // Added phone number
+//   },
+//   {
+//     id: uuidv4(),
+//     username: 'jdupont',
+//     email: 'jean.dupont@exemple.fr',
+//     role: UserRole.DOCTOR,
+//     doctorId: doctorId1,
+//     profilePicture: 'https://randomuser.me/api/portraits/men/3.jpg',
+//     phoneNumber: '0123456789' // Using doctor's phone number
+//   },
+//   {
+//     id: uuidv4(),
+//     username: 'mlaurent',
+//     email: 'marie.laurent@exemple.fr',
+//     role: UserRole.DOCTOR,
+//     doctorId: doctorId2,
+//     profilePicture: 'https://randomuser.me/api/portraits/women/4.jpg',
+//     phoneNumber: '0123456790' // Using doctor's phone number
+//   },
+//   {
+//     id: uuidv4(),
+//     username: 'sbernard',
+//     email: 'sophie.bernard@exemple.fr',
+//     role: UserRole.DOCTOR,
+//     doctorId: doctorId4,
+//     profilePicture: 'https://randomuser.me/api/portraits/women/5.jpg',
+//     phoneNumber: '0123456792' // Using doctor's phone number
+//   },
+//   // Nouveaux utilisateurs patients
+//   {
+//     id: uuidv4(),
+//     username: 'ldubois',
+//     email: 'lucie.dubois@exemple.fr',
+//     role: UserRole.PATIENT,
+//     profilePicture: 'https://randomuser.me/api/portraits/women/6.jpg',
+//     phoneNumber: '0678901234' // Using patient's phone number
+//   },
+//   // {
+//   //   id: uuidv4(),
+//   //   username: 'tmoreau',
+//   //   email: 'thomas.moreau@exemple.fr',
+//   //   role: UserRole.PATIENT,
+//   //   profilePicture: 'https://randomuser.me/api/portraits/men/7.jpg',
+//   //   phoneNumber: '0678901235' // Using patient's phone number
+//   // },
+//   {
+//     id: uuidv4(),
+//     username: 'cleroy',
+//     email: 'camille.leroy@exemple.fr',
+//     role: UserRole.PATIENT,
+//     profilePicture: 'https://randomuser.me/api/portraits/women/8.jpg',
+//     phoneNumber: '0678901236' // Using patient's phone number
+//   }
+// ];

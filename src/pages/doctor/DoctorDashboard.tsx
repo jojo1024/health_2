@@ -15,7 +15,6 @@ import { ReimbursementStatus } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { selectConsultations, fetchConsultations, selectRecentConsultations } from '../../redux/consultationSlice';
 import { selectPatients, fetchPatients } from '../../redux/patientSlice';
-import { AuthorizationService } from '../../services/authorizationService';
 
 const DoctorDashboard = () => {
   const { user } = useAuth();
@@ -28,20 +27,20 @@ const DoctorDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [authorizedPatients, setAuthorizedPatients] = useState<any[]>([]);
 
-  const doctorId = user?.doctorId;
+  const doctorId = user?.idUtilisateur;
 
   // Filtrer les consultations du médecin connecté
   const doctorConsultations = useMemo(() => {
     if (!doctorId) return [];
-    return consultations.filter(c => c.doctorId === doctorId);
+    return consultations.filter(c => c.idPatient === doctorId);
   }, [consultations, doctorId]);
 
   // Récupérer les prochains rendez-vous (à implémenter avec une vraie API)
   const upcomingAppointments = useMemo(() => {
     // Simuler des rendez-vous à venir
     return doctorConsultations.slice(0, 3).map(c => ({
-      id: c.id,
-      patientId: c.patientId,
+      id: c.idPatient,
+      patientId: c.idPatient,
       date: new Date(new Date().getTime() + (Math.floor(Math.random() * 7) + 1) * 86400000).toISOString(),
       reason: "Consultation de suivi"
     }));
@@ -60,10 +59,10 @@ const DoctorDashboard = () => {
         ]);
 
         // Si doctorId est disponible, charger les patients autorisés
-        if (doctorId) {
-          const patients = await AuthorizationService.getAuthorizedPatients(doctorId);
-          setAuthorizedPatients(patients);
-        }
+        // if (doctorId) {
+        //   const patients = await AuthorizationService.getAuthorizedPatients(doctorId);
+        //   setAuthorizedPatients(patients);
+        // }
 
         setLoading(false);
       } catch (err) {
@@ -78,8 +77,8 @@ const DoctorDashboard = () => {
 
   // Fonction pour récupérer le nom du patient
   const getPatientName = useMemo(() => (patientId: string) => {
-    const patient = allPatients.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : 'Patient inconnu';
+    const patient = allPatients.find(p => p.idPatient === patientId);
+    return  'Patient inconnu';
   }, [allPatients]);
 
   // Fonction pour récupérer le statut du remboursement
@@ -127,7 +126,7 @@ const DoctorDashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Tableau de bord Médecin</h1>
-        <p className="text-sm text-gray-500">Bienvenue, Dr. {user?.username}</p>
+        <p className="text-sm text-gray-500">Bienvenue, Dr. {user?.nomUtilisateur}</p>
       </div>
 
       {/* Stats Cards */}
@@ -158,7 +157,7 @@ const DoctorDashboard = () => {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Prescriptions</p>
-            <p className="text-2xl font-bold">{doctorConsultations.reduce((acc, curr) => acc + curr.prescriptions.length, 0)}</p>
+            {/* <p className="text-2xl font-bold">{doctorConsultations.reduce((acc, curr) => acc + curr.prescriptions.length, 0)}</p> */}
           </div>
         </Card>
 
@@ -200,7 +199,7 @@ const DoctorDashboard = () => {
                       {new Date(appointment.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{getPatientName(appointment.patientId)}</div>
+                      {/* <div className="text-sm font-medium text-gray-900">{getPatientName(appointment.patientId)}</div> */}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {appointment.reason}
@@ -219,53 +218,7 @@ const DoctorDashboard = () => {
         </div>
       </Card>
 
-      {/* Recent Consultations */}
-      <Card
-        title="Consultations récentes"
-        className="overflow-hidden"
-        footer={
-          <Link to="/doctor/consultations" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-            Voir toutes les consultations →
-          </Link>
-        }
-      >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {recentConsultations.filter(c => c.doctorId === doctorId).length > 0 ? (
-                recentConsultations
-                  .filter(c => c.doctorId === doctorId)
-                  .map((consultation) => (
-                    <tr key={consultation.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(consultation.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{getPatientName(consultation.patientId)}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(consultation.reimbursementStatus)}
-                      </td>
-                    </tr>
-                  ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
-                    Aucune consultation récente
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+  
 
       {/* Quick Links & Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

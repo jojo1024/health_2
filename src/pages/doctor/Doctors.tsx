@@ -1,17 +1,17 @@
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import React, { useState, useEffect } from 'react';
-import Button from '../components/Button';
-import Card from '../components/Card';
-import DataTable, { Column } from './components/DataTable';
-import SearchBar from './components/SearchBar';
-import ConfirmDeleteModal from './components/ConfirmDeleteModal';
-import NewDoctorModal from './components/NewDoctorModal';
-import DoctorDetailSlideOver from './components/DoctorDetailSlideOver';
-import { Doctor } from '../types';
-import { useAppDispatch } from '../redux/hooks';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
+import DataTable, { Column } from '../components/DataTable';
+import SearchBar from '../components/SearchBar';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import NewDoctorModal from '../components/NewDoctorModal';
+import DoctorDetailSlideOver from '../components/DoctorDetailSlideOver';
+import { Doctor } from '../../types';
+import { useAppDispatch } from '../../redux/hooks';
 import { useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
-import { createDoctor, deleteDoctor, fetchDoctors, updateDoctor } from '../redux/doctorSlice';
+import { RootState } from '../../redux/store';
+import { createDoctor, deleteDoctor, fetchDoctors, updateDoctor } from '../../redux/doctorSlice';
 
 // Définition des colonnes pour le tableau
 const columnsData: Column<Doctor>[] = [
@@ -115,18 +115,6 @@ const Doctors: React.FC = () => {
       >
         Détails
       </button>
-      <button
-        onClick={() => handleEditDoctor(d)}
-        className="text-blue-600 hover:text-blue-900 px-2 py-1 rounded hover:bg-blue-50"
-      >
-        <PencilIcon className="h-5 w-5" aria-hidden="true" />
-      </button>
-      <button
-        onClick={() => handleInitiateDelete(d.idPersSoignant)}
-        className="text-red-600 hover:text-red-900 px-2 py-1 rounded hover:bg-red-50"
-      >
-        <TrashIcon className="h-5 w-5" aria-hidden="true" />
-      </button>
     </div>
   );
 
@@ -160,29 +148,6 @@ const Doctors: React.FC = () => {
     dispatch(fetchDoctors());
   }, [dispatch]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <span className="ml-3">Chargement...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-        <p>{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Réessayer
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 p-4">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
@@ -190,22 +155,19 @@ const Doctors: React.FC = () => {
           <h1 className="text-2xl font-bold">Médecins</h1>
           <p className="text-gray-500 mt-1">Gérez tous les médecins enregistrés</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button icon={<PlusIcon className="w-5 h-5" />} onClick={() => {
-            setIsEditMode(false);
-            setDoctorToEdit(null);
-            setShowNewDoctorModal(true);
-          }}>
-            Nouveau Médecin
-          </Button>
-        </div>
+
       </header>
 
       <Card>
         <div className="mb-4">
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
         </div>
-
+        {
+          loading && <p className="text-center text-gray-500">Chargement des patients...</p>
+        }
+        {
+          error && <p className="text-red-500 text-center">{error}</p>
+        }
         <DataTable
           items={filteredDoctors}
           columns={columnsData}

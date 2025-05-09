@@ -2,8 +2,13 @@
  * Service API pour communiquer avec le backend
  */
 
+import { ConsultationBackendPayload } from "../types";
+
 // URL de base de l'API
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://lomeko.wookami.com/api';
+// export const API_URL = 'http://localhost:50010/api';
+// export const API_URL_DOC = 'http://localhost:50010/document';
+export const API_URL_DOC = 'https://lomeko.wookami.com/document';
 
 // Interface pour les options de fetchAPI
 interface FetchOptions {
@@ -93,7 +98,7 @@ export const prescriptionService = {
 export const patientService = {
   // Récupérer tous les patients
   getAllPatients: async () => {
-    return fetchAPI<any[]>('/patients', {
+    return fetchAPI<any[]>('/patients/fetchAll', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -107,9 +112,16 @@ export const patientService = {
     });
   },
 
+  getPatientsByMedecinId: async (idPersSoignant: number) => {
+    return fetchAPI<any>(`/patients/fetchAllByDoctor/${idPersSoignant}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+  },
+
   // Créer un nouveau patient
   createPatient: async (patientData: any) => {
-    return fetchAPI<any>('/patients', {
+    return fetchAPI<any>('/patients/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patientData)
@@ -117,8 +129,8 @@ export const patientService = {
   },
 
   // Mettre à jour un patient
-  updatePatient: async (id: string, patientData: any) => {
-    return fetchAPI<any>(`/patients/${id}`, {
+  updatePatient: async (patientData: any) => {
+    return fetchAPI<any>(`/patients/update`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patientData)
@@ -127,7 +139,7 @@ export const patientService = {
 
   // Supprimer un patient
   deletePatient: async (id: string) => {
-    return fetchAPI<{ message: string }>(`/patients/${id}`, {
+    return fetchAPI<{ message: string }>(`/patients/delete/${id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -166,11 +178,35 @@ export const patientService = {
   }
 };
 
+export const authService = {
+  // Envoyer le code par sms
+  requestPinCode: async (phoneNumber: string) => {
+    return fetchAPI<any>('/auth/request-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telephoneUtilisateur: `225${phoneNumber.replace(/\s/g, "")}`
+      })
+    });
+  },
+  // Vérifier le code envoyé par  sms
+  verifyCode: async (phoneNumber: string, code: string) => {
+    return fetchAPI<any>('/auth/verify-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telephoneUtilisateur: `225${phoneNumber.replace(/\s/g, "")}`,
+        code
+      })
+    });
+  },
+}
+
 // Service pour les médecins
 export const doctorService = {
   // Récupérer tous les médecins
   getAllDoctors: async () => {
-    return fetchAPI<any[]>('/doctors', {
+    return fetchAPI<any[]>('/personnels-soignants/fetchAll', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -178,7 +214,7 @@ export const doctorService = {
 
   // Récupérer un médecin par son ID
   getDoctorById: async (id: string) => {
-    return fetchAPI<any>(`/doctors/${id}`, {
+    return fetchAPI<any>(`/personnels-soignants/${id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -186,7 +222,7 @@ export const doctorService = {
 
   // Créer un nouveau médecin
   createDoctor: async (doctorData: any) => {
-    return fetchAPI<any>('/doctors', {
+    return fetchAPI<any>('/personnels-soignants/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(doctorData)
@@ -194,8 +230,8 @@ export const doctorService = {
   },
 
   // Mettre à jour un médecin
-  updateDoctor: async (id: string, doctorData: any) => {
-    return fetchAPI<any>(`/doctors/${id}`, {
+  updateDoctor: async (doctorData: any) => {
+    return fetchAPI<any>(`/personnels-soignants/update`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(doctorData)
@@ -204,7 +240,7 @@ export const doctorService = {
 
   // Supprimer un médecin
   deleteDoctor: async (id: string) => {
-    return fetchAPI<{ message: string }>(`/doctors/${id}`, {
+    return fetchAPI<{ message: string }>(`/personnels-soignants/delete/${id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -255,7 +291,7 @@ export const doctorService = {
 export const consultationService = {
   // Récupérer toutes les consultations
   getAllConsultations: async () => {
-    return fetchAPI<any[]>('/consultations', {
+    return fetchAPI<any[]>('/consultations/fetchAll', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -269,9 +305,16 @@ export const consultationService = {
     });
   },
 
+  getPatientConsultationById: async (idPatient: number) => {
+    return fetchAPI<any>(`/consultations/fetchByPatient/${idPatient}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+  },
+
   // Créer une nouvelle consultation
-  createConsultation: async (consultationData: any) => {
-    return fetchAPI<any>('/consultations', {
+  createConsultation: async (consultationData: ConsultationBackendPayload) => {
+    return fetchAPI<any>('/consultations/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(consultationData)

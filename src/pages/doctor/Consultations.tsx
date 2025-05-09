@@ -1,19 +1,20 @@
-// Consultation.tsx - Avec intégration du système d'autorisation
+import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import React, { useEffect, useState } from 'react';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
+// import AuthDialog from '../components/AuthDialog';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import DataTable, { Column } from '../components/DataTable';
+import NewConsultationModal from '../components/NewConsultationModal';
+import PatientConsultationDetailSlideOver from '../components/PatientConsultationDetailSlideOver';
+import SearchBar from '../components/SearchBar';
+import PatientDetailSlideOver2 from '../components/PatientDetailSlideOver2';
+import { useAppDispatch } from '../../redux/hooks';
+import { fetchConsultations } from '../../redux/consultationSlice';
 import { useSelector } from 'react-redux';
-import Card from '../components/Card';
-import { fetchConsultations } from '../redux/consultationSlice';
-import { useAppDispatch } from '../redux/hooks';
-import { RootState } from '../redux/store';
-import { ConsultationRegroupee, PatientAvecConsultations } from '../types';
-import AuthDialog from './components/AuthDialog';
-import ConfirmDeleteModal from './components/ConfirmDeleteModal';
-import DataTable, { Column } from './components/DataTable';
-import NewConsultationModal from './components/NewConsultationModal';
-import PatientConsultationDetailSlideOver from './components/PatientConsultationDetailSlideOver';
-import PatientDetailSlideOver2 from './components/PatientDetailSlideOver2';
-import SearchBar from './components/SearchBar';
-
+import { RootState } from '../../redux/store';
+import { ConsultationRegroupee, Patient, PatientAvecConsultations } from '../../types';
+import AuthDialog from '../components/AuthDialog';
 
 
 const columnsData: Column<PatientAvecConsultations>[] = [
@@ -43,7 +44,6 @@ const Consultation: React.FC = () => {
   const [showNewPatientModal, setShowNewPatientModal] = useState(false);
   const [showNewConsultationModal, setShowNewConsultationModal] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<PatientAvecConsultations | null>(null);
-  const [telephoneUtilisateur, setTelephoneUtilisateur] = useState("")
   console.log("🚀 ~ selectedConsultation:", selectedConsultation)
   const [showConsultationDetail, setShowPatientDetail] = useState(false);
   const [showPatientConsultationDetail, setShowPatientConsultationDetail] = useState(false);
@@ -51,6 +51,7 @@ const Consultation: React.FC = () => {
   const [patientToEdit, setPatientToEdit] = useState<PatientAvecConsultations | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [consultationToDelete, setConsultationToDelete] = useState<number | null>(null);
+  const [patient, setPatient] = useState<Patient | null>(null)
 
   // Nouvel état pour gérer les actions en attente après authentification
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -64,8 +65,9 @@ const Consultation: React.FC = () => {
   };
 
   // Gestion de la réussite de l'authentification
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = (patient: Patient) => {
     // Exécuter l'action en attente après authentification réussie
+    setPatient(patient);
     if (pendingAction) {
       switch (pendingAction.type) {
         case 'viewDetails':
@@ -139,9 +141,7 @@ const Consultation: React.FC = () => {
 
     // Demander l'authentification
     setSelectedConsultationId(consultation.idPatient);
-    setSelectedConsultation(consultation);
-
-    setShowPatientDetail(true);
+    setShowDialog(true);
   };
 
   // Fonction pour voir les détails de consultation d'un patient
@@ -215,7 +215,7 @@ const Consultation: React.FC = () => {
       >
         Détails
       </button>
-      {/* <button
+      <button
         onClick={() => handleEditPatient(p)}
         className="text-blue-600 hover:text-blue-900 px-2 py-1 rounded hover:bg-blue-50"
       >
@@ -226,7 +226,7 @@ const Consultation: React.FC = () => {
         className="text-red-600 hover:text-red-900 px-2 py-1 rounded hover:bg-red-50"
       >
         <TrashIcon className="h-5 w-5" aria-hidden="true" />
-      </button> */}
+      </button>
     </div>
   );
 
@@ -263,7 +263,7 @@ const Consultation: React.FC = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="space-y-6 p-4">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
@@ -271,7 +271,7 @@ const Consultation: React.FC = () => {
           <h1 className="text-2xl font-bold">Consultation</h1>
           <p className="text-gray-500 mt-1">Gérez tous les consultations</p>
         </div>
-        {/* <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button icon={<PlusIcon className="w-5 h-5" />} onClick={() => {
             // Nouvelle consultation - demander l'autorisation d'abord
             setIsEditMode(false);
@@ -289,7 +289,7 @@ const Consultation: React.FC = () => {
           }}>
             Nouvelle consultation
           </Button>
-        </div> */}
+        </div>
       </header>
 
       <Card>
@@ -339,12 +339,13 @@ const Consultation: React.FC = () => {
       // onNewConsultation={handleNewConsultation}
       />
 
-      {showNewConsultationModal && (
+      {showNewConsultationModal && patient && (
         <NewConsultationModal
           isOpen={showNewConsultationModal}
           onClose={() => setShowNewConsultationModal(false)}
           // @ts-ignore
           patientId={selectedConsultationId || ""}
+          patient={patient!}
         />
       )}
 

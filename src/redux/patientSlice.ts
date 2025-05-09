@@ -40,9 +40,23 @@ export const fetchPatientById = createAsyncThunk<
   Patient,
   string,
   { rejectValue: string }
->('patients/fetchById', async (id, { rejectWithValue }) => {
+>('patients/fetchById', async (idUtilisateur, { rejectWithValue }) => {
   try {
-    return await patientService.getPatientById(id);
+    return await patientService.getPatientById(idUtilisateur);
+  } catch (error) {
+    const apiError = error as ApiError;
+    return rejectWithValue(apiError.message || 'Erreur lors de la récupération du patient');
+  }
+});
+
+// Thunk pour récupérer un patient par son ID
+export const fetchPatientsByMedecinId = createAsyncThunk<
+  Patient,
+  number,
+  { rejectValue: string }
+>('patients/fetchAllByDoctor', async (idPersSoignant, { rejectWithValue }) => {
+  try {
+    return await patientService.getPatientsByMedecinId(idPersSoignant);
   } catch (error) {
     const apiError = error as ApiError;
     return rejectWithValue(apiError.message || 'Erreur lors de la récupération du patient');
@@ -66,11 +80,11 @@ export const createPatient = createAsyncThunk<
 // Thunk pour mettre à jour un patient
 export const updatePatient = createAsyncThunk<
   Patient,
-  { id: string; data: Partial<Patient> },
+  { data: Partial<Patient> },
   { rejectValue: string }
->('patients/update', async ({ id, data }, { rejectWithValue }) => {
+>('patients/update', async ({ data }, { rejectWithValue }) => {
   try {
-    return await patientService.updatePatient(id, data);
+    return await patientService.updatePatient(data);
   } catch (error) {
     const apiError = error as ApiError;
     return rejectWithValue(apiError.message || 'Erreur lors de la mise à jour du patient');
@@ -82,10 +96,10 @@ export const deletePatient = createAsyncThunk<
   string,
   string,
   { rejectValue: string }
->('patients/delete', async (id, { rejectWithValue }) => {
+>('patients/delete', async (idUtilisateur, { rejectWithValue }) => {
   try {
-    await patientService.deletePatient(id);
-    return id;
+    await patientService.deletePatient(idUtilisateur);
+    return idUtilisateur;
   } catch (error) {
     const apiError = error as ApiError;
     return rejectWithValue(apiError.message || 'Erreur lors de la suppression du patient');
@@ -116,16 +130,30 @@ export const patientSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchPatients.fulfilled, (state, action) => {
+      .addCase(fetchPatients.fulfilled, (state, action: any) => {
         state.loading = false;
-        state.patients = action.payload;
+        state.patients = action.payload?.data;
       })
       .addCase(fetchPatients.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Une erreur est survenue';
       })
 
-    // Gestion de fetchPatientById
+      // 
+      .addCase(fetchPatientsByMedecinId.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPatientsByMedecinId.fulfilled, (state, action: any) => {
+        state.loading = false;
+        state.patients = action.payload?.data;
+      })
+      .addCase(fetchPatientsByMedecinId.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Une erreur est survenue';
+      })
+
+      // Gestion de fetchPatientById
       .addCase(fetchPatientById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -134,42 +162,45 @@ export const patientSlice = createSlice({
         state.loading = false;
         const patient = action.payload;
         // Mettre à jour le patient dans le tableau ou l'ajouter s'il n'existe pas
-        const index = state.patients.findIndex(p => p.id === patient.id);
+        const index = state.patients.findIndex(p => p.idUtilisateur === patient.idUtilisateur);
         if (index !== -1) {
           state.patients[index] = patient;
         } else {
           state.patients.push(patient);
         }
-        state.selectedPatientId = patient.id;
+        state.selectedPatientId = patient.idUtilisateur;
       })
       .addCase(fetchPatientById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Une erreur est survenue';
       })
 
-    // Gestion de createPatient
+      // Gestion de createPatient
       .addCase(createPatient.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(createPatient.fulfilled, (state, action) => {
+      .addCase(createPatient.fulfilled, (state, action: any) => {
+        console.log("🚀 ~ .addCase ~ action:", action)
         state.loading = false;
-        state.patients.push(action.payload);
+        state.patients.unshift(action.payload?.data);
       })
       .addCase(createPatient.rejected, (state, action) => {
+        console.log("🚀 ~ .addCase ~ action:", action)
         state.loading = false;
         state.error = action.payload || 'Une erreur est survenue';
       })
 
-    // Gestion de updatePatient
+      // Gestion de updatePatient
       .addCase(updatePatient.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updatePatient.fulfilled, (state, action) => {
+      .addCase(updatePatient.fulfilled, (state, action: any) => {
+        console.log("🚀 ~ .addCase ~ action:", action)
         state.loading = false;
-        const updatedPatient = action.payload;
-        const index = state.patients.findIndex(p => p.id === updatedPatient.id);
+        const updatedPatient = action.payload?.data;
+        const index = state.patients.findIndex(p => p.idPatient === updatedPatient.idPatient);
         if (index !== -1) {
           state.patients[index] = updatedPatient;
         }
@@ -179,15 +210,16 @@ export const patientSlice = createSlice({
         state.error = action.payload || 'Une erreur est survenue';
       })
 
-    // Gestion de deletePatient
+      // Gestion de deletePatient
       .addCase(deletePatient.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(deletePatient.fulfilled, (state, action) => {
+      .addCase(deletePatient.fulfilled, (state, action: any) => {
+        console.log("🚀 ~ .addCase ~ action:", action)
         state.loading = false;
-        state.patients = state.patients.filter(p => p.id !== action.payload);
-        if (state.selectedPatientId === action.payload) {
+        state.patients = state.patients.filter(p => p.idUtilisateur !== action.payload);
+        if (state.selectedPatientId === action.payload?.data) {
           state.selectedPatientId = null;
         }
       })
@@ -214,11 +246,11 @@ export const selectSelectedPatientId = (state: { patients: PatientState }) =>
 
 export const selectSelectedPatient = (state: { patients: PatientState }) => {
   const { patients, selectedPatientId } = state.patients;
-  return patients.find(p => p.id === selectedPatientId) || null;
+  return patients.find(p => p.idUtilisateur === selectedPatientId) || null;
 };
 
-export const selectPatientById = (state: { patients: PatientState }, id: string) => {
-  return state.patients.patients.find(p => p.id === id) || null;
+export const selectPatientById = (state: { patients: PatientState }, idUtilisateur: string) => {
+  return state.patients.patients.find(p => p.idUtilisateur === idUtilisateur) || null;
 };
 
 export const selectPatientLoading = (state: { patients: PatientState }) =>

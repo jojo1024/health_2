@@ -1,17 +1,14 @@
-import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import Button from '../components/Button';
-import Card from '../components/Card';
-import { useAppDispatch } from '../redux/hooks';
-import { createPatient, deletePatient, fetchPatients, updatePatient } from '../redux/patientSlice';
-import { RootState } from '../redux/store';
-import { Patient } from '../types';
-import ConfirmDeleteModal from './components/ConfirmDeleteModal';
-import DataTable, { Column } from './components/DataTable';
-import NewPatientModal from './components/NewPatientModal';
-import PatientDetailSlideOver from './components/PatientDetailSlideOver';
-import SearchBar from './components/SearchBar';
+import Card from '../../components/Card';
+import { useAppDispatch } from '../../redux/hooks';
+import { deletePatient, fetchPatients, fetchPatientsByMedecinId } from '../../redux/patientSlice';
+import { RootState } from '../../redux/store';
+import { Patient } from '../../types';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import DataTable, { Column } from '../components/DataTable';
+import PatientDetailSlideOver from '../components/PatientDetailSlideOver';
+import SearchBar from '../components/SearchBar';
 
 const columnsData: Column<Patient>[] = [
   { label: 'Num.', render: p => p.idPatient },
@@ -30,11 +27,8 @@ const Patients: React.FC = () => {
   const idUtilisateur = useSelector((state: RootState) => state.auth.userInfo.user?.idUtilisateur);
 
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [showNewPatientModal, setShowNewPatientModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showPatientDetail, setShowPatientDetail] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [patientToEdit, setPatientToEdit] = useState<Patient | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
 
@@ -45,29 +39,10 @@ const Patients: React.FC = () => {
     setSelectedPatient(null);
   };
 
-  // Fonction pour ajouter un nouveau patient
-  const handleSavePatient = (formData: Patient) => {
-    dispatch(createPatient(formData));
-    // setPatientData([...patientData, newPatient]);
-  };
-
   // Fonction pour ouvrir les détails d'un patient
   const handleViewPatientDetails = (patient: Patient) => {
     setSelectedPatient(patient);
     setShowPatientDetail(true);
-  };
-
-  // Fonction pour modifier un patient
-  const handleEditPatient = (patient: Patient) => {
-    setPatientToEdit(patient);
-    setIsEditMode(true);
-    setShowNewPatientModal(true);
-  };
-
-  // Fonction pour initier la suppression d'un patient
-  const handleInitiateDelete = (idPatient: string) => {
-    setPatientToDelete(idPatient);
-    setShowDeleteConfirmModal(true);
   };
 
   // Fonction pour confirmer la suppression d'un patient
@@ -76,7 +51,7 @@ const Patients: React.FC = () => {
       dispatch(deletePatient(patientToDelete));
       // setPatientData(patientData.filter(p => p.idPatient !== patientToDelete));
       setShowDeleteConfirmModal(false);
-        closeDetailSlideOver();
+      closeDetailSlideOver();
 
       // Si le patient supprimé était sélectionné, fermer les détails
       // if (selectedPatient && selectedPatient.idPatient === patientToDelete) {
@@ -87,29 +62,6 @@ const Patients: React.FC = () => {
     }
   };
 
-  // Fonction pour mettre à jour un patient existant
-  const handleUpdatePatient = (updatedPatientData: Patient) => {
-    if (!patientToEdit) return;
-
-    const updatedPatient: Patient = {
-      ...patientToEdit,
-      ...updatedPatientData
-    };
-
-    dispatch(updatePatient({ data: updatedPatient }));
-
-    // setPatientData(patientData.map(p => p.idPatient === patientToEdit.idPatient ? updatedPatient : p));
-
-    // Si ce patient était sélectionné dans le SlideOver, mettre à jour les détails
-    if (selectedPatient && selectedPatient.idPatient === patientToEdit.idPatient) {
-      setSelectedPatient(updatedPatient);
-    }
-
-    setPatientToEdit(null);
-    setIsEditMode(false);
-  };
-
-
 
   const renderActions = (p: Patient) => (
     <div className="flex space-x-2">
@@ -119,18 +71,7 @@ const Patients: React.FC = () => {
       >
         Détails
       </button>
-      <button
-        onClick={() => handleEditPatient(p)}
-        className="text-blue-600 hover:text-blue-900 px-2 py-1 rounded hover:bg-blue-50"
-      >
-        <PencilIcon className="h-5 w-5" aria-hidden="true" />
-      </button>
-      <button
-        onClick={() => handleInitiateDelete(p.idPatient)}
-        className="text-red-600 hover:text-red-900 px-2 py-1 rounded hover:bg-red-50"
-      >
-        <TrashIcon className="h-5 w-5" aria-hidden="true" />
-      </button>
+
     </div>
   );
 
@@ -144,29 +85,13 @@ const Patients: React.FC = () => {
     (patient.groupeSanguinPatient && patient.groupeSanguinPatient.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Gérer le save/update en fonction du mode
-  const handleSaveOrUpdatePatient = (formData: Patient) => {
-    if (isEditMode && patientToEdit) {
-      handleUpdatePatient(formData);
-    } else {
-      handleSavePatient(formData);
-    }
 
-    setShowNewPatientModal(false);
-  };
-
-  // Fermer modal et réinitialiser mode d'édition
-  const handleCloseModal = () => {
-    setShowNewPatientModal(false);
-    setIsEditMode(false);
-    setPatientToEdit(null);
-  };
 
   // Fonction pour obtenir une clé unique pour chaque patient
   const getPatientKey = (patient: Patient) => patient.idPatient;
 
   useEffect(() => {
-    dispatch(fetchPatients());
+    dispatch(fetchPatientsByMedecinId(idUtilisateur || 0));
   }, [dispatch]);
 
   if (loading) {
@@ -191,7 +116,6 @@ const Patients: React.FC = () => {
       </div>
     );
   }
-
   return (
     <div className="space-y-6 p-4">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
@@ -199,27 +123,13 @@ const Patients: React.FC = () => {
           <h1 className="text-2xl font-bold">Patients</h1>
           <p className="text-gray-500 mt-1">Gérez tous les patients enregistrés</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button icon={<PlusIcon className="w-5 h-5" />} onClick={() => {
-            setIsEditMode(false);
-            setPatientToEdit(null);
-            setShowNewPatientModal(true);
-          }}>
-            Nouveau Patient
-          </Button>
-        </div>
       </header>
 
       <Card>
         <div className="mb-4">
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
         </div>
-        {/* {
-          loading && <p className="text-center text-gray-500">Chargement des patients...</p>
-        }
-        {
-          error && <p className="text-red-500 text-center">{error}</p>
-        } */}
+    
         <DataTable
           items={filteredPatients}
           columns={columnsData}
@@ -230,23 +140,13 @@ const Patients: React.FC = () => {
         />
       </Card>
 
-      {showNewPatientModal && (
-        <NewPatientModal
-          isOpen={showNewPatientModal}
-          onSave={handleSaveOrUpdatePatient}
-          onClose={handleCloseModal}
-          initialData={isEditMode && patientToEdit ? patientToEdit : undefined}
-          isEditMode={isEditMode}
-        />
-      )}
-
       {showPatientDetail && selectedPatient && (
         <PatientDetailSlideOver
           isOpen={showPatientDetail}
           onClose={closeDetailSlideOver}
           patient={selectedPatient}
-          onEdit={handleEditPatient}
-          onDelete={handleInitiateDelete}
+          onEdit={() => null}
+          onDelete={() => null}
         />
       )}
 

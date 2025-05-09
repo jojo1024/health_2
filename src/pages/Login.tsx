@@ -8,7 +8,6 @@ import {
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
-import { users } from '../data/mockData';
 import { AuthStep } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -92,10 +91,11 @@ const CountdownTimer = ({ seconds }: { seconds: number | null }) => {
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
+  console.log("🚀 ~ Login ~ phoneNumber:", phoneNumber)
   const [verificationCode, setVerificationCode] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState(false)
+  console.log("🚀 ~ Login ~ loading:", loading)
   const { isAuthenticated, isLoading, error, currentStep, codeExpiresIn, isCodeExpired, initiateLogin, verifyCode } = useAuth();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
@@ -141,13 +141,14 @@ const Login = () => {
     }
 
     // Validation améliorée du numéro de téléphone
-    if (!isValidPhoneNumber(phoneNumber)) {
-      setFormError('Format du numéro de téléphone invalide. Utilisez un format français (06 12 34 56 78) ou international (+33 6 12 34 56 78)');
-      return;
-    }
+    // if (!isValidPhoneNumber(phoneNumber)) {
+    //   setFormError('Format du numéro de téléphone invalide. Utilisez un format français (06 12 34 56 78) ou international (+33 6 12 34 56 78)');
+    //   return;
+    // }
 
     setFormError(null);
     try {
+      setLoading(true);
       // Standardiser le numéro avant de l'envoyer
       const standardizedPhone = standardizePhoneNumber(phoneNumber);
       const success = await initiateLogin(standardizedPhone);
@@ -156,6 +157,8 @@ const Login = () => {
       }
     } catch (error) {
       setFormError("Une erreur s'est produite. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -169,12 +172,15 @@ const Login = () => {
 
     setFormError(null);
     try {
+      setLoading(true);
       const success = await verifyCode(verificationCode);
       if (!success) {
         setFormError('Code de vérification incorrect');
       }
     } catch (error) {
       setFormError("Une erreur s'est produite. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,7 +196,7 @@ const Login = () => {
 
   // Afficher le formulaire de numéro de téléphone ou de vérification de code en fonction de l'étape actuelle
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className=" flex items-center h-[100vh] justify-center bg-gray-50   px-4 sm:px-6 lg:px-8">
       <motion.div
         className="max-w-md w-full space-y-8"
         initial={{ opacity: 0, y: 30 }}
@@ -277,33 +283,11 @@ const Login = () => {
                     disabled={isLoading}
                   />
                 </div>
-                <p className="mt-2 text-sm text-gray-500">
+                {/* <p className="mt-2 text-sm text-gray-500">
                   Formats acceptés: 06 12 34 56 78 ou +33 6 12 34 56 78
-                </p>
+                </p> */}
               </motion.div>
 
-              <motion.div variants={itemVariants} className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    disabled={isLoading}
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                    Se souvenir de moi
-                  </label>
-                </div>
-
-                <div className="text-sm">
-                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                    Mot de passe oublié?
-                  </a>
-                </div>
-              </motion.div>
 
               <motion.div variants={itemVariants}>
                 <button
@@ -317,7 +301,10 @@ const Login = () => {
                       aria-hidden="true"
                     />
                   </span>
-                  {isLoading ? 'Envoi en cours...' : 'Recevoir le code SMS'}
+                  {loading ? 'Envoi en cours...' : 'Recevoir le code SMS'}
+                  {loading && (
+                    <span className="ml-2 animate-spin h-4 w-4 border-2 border-t-transparent border-white rounded-full" />
+                  )}
                 </button>
               </motion.div>
             </motion.form>
@@ -397,7 +384,10 @@ const Login = () => {
                       aria-hidden="true"
                     />
                   </span>
-                  {isLoading ? 'Vérification...' : 'Vérifier le code'}
+                  {loading ? 'Vérification...' : 'Vérifier le code'}
+                  {loading && (
+                    <span className="ml-2 animate-spin h-4 w-4 border-2 border-t-transparent border-white rounded-full" />
+                  )}
                 </button>
               </motion.div>
 
@@ -415,7 +405,7 @@ const Login = () => {
           )}
         </AnimatePresence>
 
-        <motion.div
+        {/* <motion.div
           className="mt-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -431,7 +421,7 @@ const Login = () => {
               </span>
             </div>
           </div>
-
+          
           <motion.div
             className="mt-6 grid grid-cols-2 gap-3"
             initial={{ opacity: 0 }}
@@ -443,7 +433,7 @@ const Login = () => {
                 key={user.id}
                 className="cursor-pointer rounded-md border border-gray-300 bg-white py-2 px-3 hover:bg-gray-50"
                 onClick={() => {
-                  setPhoneNumber(formatPhoneNumber(user.phoneNumber));
+                  setPhoneNumber(user.phoneNumber);
                 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{
@@ -466,13 +456,14 @@ const Login = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-gray-900">{user.username}</p>
-                    <p className="truncate text-sm text-gray-500">{formatPhoneNumber(user.phoneNumber)}</p>
+                    <p className="truncate text-sm text-gray-500">{user.phoneNumber}</p>
                   </div>
                 </div>
               </motion.div>
             ))}
           </motion.div>
-        </motion.div>
+
+        </motion.div> */}
       </motion.div>
     </div>
   );

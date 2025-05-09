@@ -73,7 +73,7 @@ const usePermissions = (): PermissionSet => {
   }
 
   // Définition des permissions selon le rôle
-  switch (user.role) {
+  switch (user.typeUtilisateur) {
     case UserRole.ADMIN:
       // L'admin a accès à tout sauf la création/modification de consultations et prescriptions
       return {
@@ -170,37 +170,6 @@ const usePermissions = (): PermissionSet => {
 
         canViewOwnData: true,
         canManageChildren: true, // Peut gérer ses enfants
-      };
-
-    case UserRole.SOCIAL_SECURITY_AGENT:
-      // L'agent de sécu peut voir les remboursements mais pas les consultations détaillées
-      return {
-        ...defaultPermissions,
-        canViewPatients: true,
-        canCreatePatients: false,
-        canEditPatients: true,
-        canDeletePatients: false,
-
-        canViewDoctors: true,
-        canCreateDoctors: false,
-        canEditDoctors: true,
-        canDeleteDoctors: false,
-
-        canViewConsultations: true, // Limité aux informations administratives
-        canCreateConsultations: false,
-        canEditConsultations: false,
-        canDeleteConsultations: false,
-
-        canViewPrescriptions: false,
-        canCreatePrescriptions: false,
-        canEditPrescriptions: false,
-        canDeletePrescriptions: false,
-
-        canViewReimbursements: true,
-        canProcessReimbursements: true,
-
-        canRequestPatientAccess: false,
-        canViewAllPatientData: false,
       };
 
     default:

@@ -41,9 +41,9 @@ export const fetchDoctorById = createAsyncThunk<
   Doctor,
   string,
   { rejectValue: string }
->('doctors/fetchById', async (id, { rejectWithValue }) => {
+>('doctors/fetchById', async (idPersSoignant, { rejectWithValue }) => {
   try {
-    return await doctorService.getDoctorById(id);
+    return await doctorService.getDoctorById(idPersSoignant);
   } catch (error) {
     const apiError = error as ApiError;
     return rejectWithValue(apiError.message || 'Erreur lors de la récupération du médecin');
@@ -67,11 +67,11 @@ export const createDoctor = createAsyncThunk<
 // Thunk pour mettre à jour un médecin
 export const updateDoctor = createAsyncThunk<
   Doctor,
-  { id: string; data: Partial<Doctor> },
+  { data: Partial<Doctor> },
   { rejectValue: string }
->('doctors/update', async ({ id, data }, { rejectWithValue }) => {
+>('doctors/update', async ({ data }, { rejectWithValue }) => {
   try {
-    return await doctorService.updateDoctor(id, data);
+    return await doctorService.updateDoctor(data);
   } catch (error) {
     const apiError = error as ApiError;
     return rejectWithValue(apiError.message || 'Erreur lors de la mise à jour du médecin');
@@ -83,10 +83,10 @@ export const deleteDoctor = createAsyncThunk<
   string,
   string,
   { rejectValue: string }
->('doctors/delete', async (id, { rejectWithValue }) => {
+>('doctors/delete', async (idPersSoignant, { rejectWithValue }) => {
   try {
-    await doctorService.deleteDoctor(id);
-    return id;
+    await doctorService.deleteDoctor(idPersSoignant);
+    return idPersSoignant;
   } catch (error) {
     const apiError = error as ApiError;
     return rejectWithValue(apiError.message || 'Erreur lors de la suppression du médecin');
@@ -118,9 +118,9 @@ export const doctorSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchDoctors.fulfilled, (state, action) => {
+      .addCase(fetchDoctors.fulfilled, (state, action:any) => {
         state.loading = false;
-        state.doctors = action.payload;
+        state.doctors = action.payload?.data;
       })
       .addCase(fetchDoctors.rejected, (state, action) => {
         state.loading = false;
@@ -136,13 +136,13 @@ export const doctorSlice = createSlice({
         state.loading = false;
         const doctor = action.payload;
         // Mettre à jour le médecin dans le tableau ou l'ajouter s'il n'existe pas
-        const index = state.doctors.findIndex(d => d.id === doctor.id);
+        const index = state.doctors.findIndex(d => d.idPersSoignant === doctor.idPersSoignant);
         if (index !== -1) {
           state.doctors[index] = doctor;
         } else {
           state.doctors.push(doctor);
         }
-        state.selectedDoctorId = doctor.id;
+        state.selectedDoctorId = doctor.idPersSoignant;
       })
       .addCase(fetchDoctorById.rejected, (state, action) => {
         state.loading = false;
@@ -154,9 +154,9 @@ export const doctorSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(createDoctor.fulfilled, (state, action) => {
+      .addCase(createDoctor.fulfilled, (state, action:any) => {
         state.loading = false;
-        state.doctors.push(action.payload);
+        state.doctors.unshift(action.payload?.data);
       })
       .addCase(createDoctor.rejected, (state, action) => {
         state.loading = false;
@@ -168,10 +168,10 @@ export const doctorSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateDoctor.fulfilled, (state, action) => {
+      .addCase(updateDoctor.fulfilled, (state, action:any) => {
         state.loading = false;
-        const updatedDoctor = action.payload;
-        const index = state.doctors.findIndex(d => d.id === updatedDoctor.id);
+        const updatedDoctor = action.payload?.data;
+        const index = state.doctors.findIndex(d => d.idPersSoignant === updatedDoctor.idPersSoignant);
         if (index !== -1) {
           state.doctors[index] = updatedDoctor;
         }
@@ -188,7 +188,7 @@ export const doctorSlice = createSlice({
       })
       .addCase(deleteDoctor.fulfilled, (state, action) => {
         state.loading = false;
-        state.doctors = state.doctors.filter(d => d.id !== action.payload);
+        state.doctors = state.doctors.filter(d => d.idPersSoignant !== action.payload);
         if (state.selectedDoctorId === action.payload) {
           state.selectedDoctorId = null;
         }
@@ -217,11 +217,11 @@ export const selectSelectedDoctorId = (state: { doctors: DoctorState }) =>
 
 export const selectSelectedDoctor = (state: { doctors: DoctorState }) => {
   const { doctors, selectedDoctorId } = state.doctors;
-  return doctors.find(d => d.id === selectedDoctorId) || null;
+  return doctors.find(d => d.idPersSoignant === selectedDoctorId) || null;
 };
 
-export const selectDoctorById = (state: { doctors: DoctorState }, id: string) => {
-  return state.doctors.doctors.find(d => d.id === id) || null;
+export const selectDoctorById = (state: { doctors: DoctorState }, idPersSoignant: string) => {
+  return state.doctors.doctors.find(d => d.idPersSoignant === idPersSoignant) || null;
 };
 
 export const selectDoctorLoading = (state: { doctors: DoctorState }) =>
