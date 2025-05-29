@@ -1,24 +1,25 @@
-import React, { useState, Fragment, useRef, useEffect } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
-import CustomInput from '../components/CustomInput';
-import { ConsultationBackendPayload, Patient } from '../../types';
-import { Document, validateConsultationForm } from '../../hooks/useFormData';
-import { calculateAge } from '../../utils/functions';
-import { useAuth } from '../../contexts/AuthContext';
-import { useAppDispatch } from '../../redux/hooks';
-import { createConsultation } from '../../redux/consultationSlice';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import Button from '../../components/Button';
-import { AddIcon, EyeIcon, PdfIcon, Spinner } from '../../utils/svg';
+import { useAuth } from '../../contexts/AuthContext';
+import { Document, validateConsultationForm } from '../../hooks/useFormData';
+import { createConsultation } from '../../redux/consultationSlice';
+import { useAppDispatch } from '../../redux/hooks';
+import { RootState } from '../../redux/store';
+import { ConsultationBackendPayload, Patient } from '../../types';
+import { calculateAge } from '../../utils/functions';
+import { AddIcon, PdfIcon, Spinner } from '../../utils/svg';
+import CustomInput from '../components/CustomInput';
 
 interface NewConsultationModalProps {
   isOpen: boolean;
   onClose: () => void;
   patientId: string; // ID du patient pour lier la consultation
   patient: Patient;
-  idPersSoignant: number; // Ajout de l'ID du personnel soignant
+  onSuccess: (message: string) => void;
+  onError: (message: string) => void;
 }
-
-
 
 const initialFormData = {
   temperature: '',
@@ -33,24 +34,21 @@ const initialFormData = {
   prescription: '',
 }
 
-
-
 const NewConsultationModal: React.FC<NewConsultationModalProps> = ({
   isOpen,
   onClose,
-  patientId,
   patient,
-  idPersSoignant
+  onSuccess,
+  onError,
 }) => {
-
   const dispatch = useAppDispatch();
+  const { loading } = useSelector((state: RootState) => state.consultations);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
 
-
   const [formData, setFormData] = useState(initialFormData);
-  const [loading, setLoading] = useState(false)
   const [documents, setDocuments] = useState<Document[]>([]);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
@@ -156,22 +154,17 @@ const NewConsultationModal: React.FC<NewConsultationModalProps> = ({
     setPreviewDocument(null);
   };
 
-
-
   const handleSubmit = async () => {
     try {
-      setLoading(true);
       if (validateConsultationForm(formData, setErrors, documents)) {
+        setIsSubmitting(true);
         // Transformation des données pour correspondre au schéma du backend
         const consultationPayload: ConsultationBackendPayload = {
-          // Correspond au patient qu'on passe en paramètre
-          idPatient: Number(patient.idUtilisateur), // Conversion en nombre
-          // Correspond à l'identifant de l'utilisateur connecté notamment l'id du personnel soignant
+          idPatient: Number(patient.idUtilisateur),
           idPersSoignant: Number(user?.idUtilisateur),
           motifConsultation: formData.motif,
           detailConsultation: formData.consultation,
           ordonnance: formData.prescription,
-          // Ajouter les constantes seulement si au moins une valeur est renseignée
           constantes: {}
         };
 
@@ -202,26 +195,26 @@ const NewConsultationModal: React.FC<NewConsultationModalProps> = ({
         if (documents.length > 0) {
           consultationPayload.documentsConsultations = documents.map(doc => ({
             type: doc.type,
-            url: doc.filename, // Pour l'instant, on utilise le nom de fichier comme URL
-            data: doc.base64 // On envoie les données base64
+            url: doc.filename,
+            data: doc.base64
           }));
         }
 
         // Envoi des données au backend
-        console.log("Envoi des données de consultation au backend:", consultationPayload);
+        await dispatch(createConsultation(consultationPayload)).unwrap();
 
-        dispatch(createConsultation(consultationPayload))
-
-        // Pour le moment, simulons un succès
+        // Réinitialiser le formulaire
         setFormData(initialFormData);
         setDocuments([]);
+
+        // Notifier le succès
+        onSuccess('Consultation créée avec succès');
       }
     } catch (error) {
-      console.log("🚀 ~ handleSubmit ~ error:", error)
+      console.error("Erreur lors de la création de la consultation:", error);
+      onError('Erreur lors de la création de la consultation');
     } finally {
-      setLoading(false);
-      onClose();
-
+      setIsSubmitting(false);
     }
   };
 
@@ -376,7 +369,6 @@ const NewConsultationModal: React.FC<NewConsultationModalProps> = ({
                             >
                               {isProcessingFiles ? (
                                 <>
-
                                   <Spinner />
                                   <span className="text-xs text-gray-500 mt-1">Chargement...</span>
                                 </>
@@ -504,6 +496,7 @@ const NewConsultationModal: React.FC<NewConsultationModalProps> = ({
                   <Button
                     variant="outline"
                     onClick={onClose}
+                    disabled={loading}
                   >
                     Annuler
                   </Button>
@@ -511,10 +504,10 @@ const NewConsultationModal: React.FC<NewConsultationModalProps> = ({
                   <Button
                     variant="primary"
                     onClick={handleSubmit}
-                    loading={loading}
-                  // disabled={!phoneNumber || phoneNumber.length < 10}
+                    loading={isSubmitting}
+                    disabled={isSubmitting}
                   >
-                    Enregistrer
+                    {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
                   </Button>
                 </div>
               </DialogPanel>

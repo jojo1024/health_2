@@ -15,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { ConsultationRegroupee, Patient, PatientAvecConsultations } from '../../types';
 import AuthDialog from '../components/AuthDialog';
+import Notification from '../../components/Notification';
 
 
 const columnsData: Column<PatientAvecConsultations>[] = [
@@ -52,6 +53,11 @@ const Consultation: React.FC = () => {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [consultationToDelete, setConsultationToDelete] = useState<number | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Nouvel état pour gérer les actions en attente après authentification
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -263,30 +269,36 @@ const Consultation: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6 p-4">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-bold">Consultation</h1>
           <p className="text-gray-500 mt-1">Gérez tous les consultations</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button icon={<PlusIcon className="w-5 h-5" />} onClick={() => {
-            // Nouvelle consultation - demander l'autorisation d'abord
-            setIsEditMode(false);
-            setPatientToEdit(null);
-
-            // Pour la nouvelle consultation générale, nous utilisons un ID fictif
-            // Dans une application réelle, vous pourriez avoir une authentification différente
-            setSelectedConsultationId(1);
-            setShowDialog(true);
-
-            setPendingAction({
-              type: 'newConsultation',
-              idPatient: 1
-            });
-          }}>
+          <Button
+            icon={<PlusIcon className="w-5 h-5" />}
+            onClick={() => {
+              setIsEditMode(false);
+              setPatientToEdit(null);
+              setSelectedConsultationId(1);
+              setShowDialog(true);
+              setPendingAction({
+                type: 'newConsultation',
+                idPatient: 1
+              });
+            }}
+            disabled={loading}
+          >
             Nouvelle consultation
           </Button>
         </div>
@@ -343,9 +355,21 @@ const Consultation: React.FC = () => {
         <NewConsultationModal
           isOpen={showNewConsultationModal}
           onClose={() => setShowNewConsultationModal(false)}
-          // @ts-ignore
-          patientId={selectedConsultationId || ""}
-          patient={patient!}
+          patientId={selectedConsultationId?.toString() || ""}
+          patient={patient}
+          onSuccess={(message) => {
+            setNotification({
+              message,
+              type: 'success'
+            });
+            setShowNewConsultationModal(false);
+          }}
+          onError={(message) => {
+            setNotification({
+              message,
+              type: 'error'
+            });
+          }}
         />
       )}
 
@@ -356,6 +380,8 @@ const Consultation: React.FC = () => {
         onConfirm={handleConfirmDelete}
         title="Supprimer le patient"
         message={`Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible et toutes les données associées seront perdues.`}
+        isSubmitting={isSubmitting}
+
       />
     </div>
   );

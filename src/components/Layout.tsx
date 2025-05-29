@@ -176,7 +176,7 @@ const Layout = ({ children }: LayoutProps) => {
                 {permissions.canViewPatients && (
                   <NavItem
                     to="/doctor/consultations"
-                    label="Mes Consultations"
+                    label="Consultations"
                     icon={<UserGroupIcon />}
                     isActive={path.startsWith('/doctor/consultations')}
                     onClick={closeSidebar}

@@ -6,18 +6,20 @@ import { UserRole } from "./types";
 // Pages communes
 import Login from "./pages/Login";
 
-// Pages Admin
-import Consultations from "./pages/Consultations";
-import DoctorConsultation from "./pages/doctor/Consultations";
-import Dashboard from "./pages/Dashboard";
-import Doctors from "./pages/Doctors";
-import DoctorPatient from "./pages/doctor/Patients";
-import PatientConsultation from "./pages/patient/Consulation";
-import Patients from "./pages/Patients";
-
-
 // Pages Médecin
+import DoctorConsultation from "./pages/doctor/Consultations";
+import DoctorPatient from "./pages/doctor/Patients";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+
+// Pages Patient
+import PatientConsultation from "./pages/patient/Consulation";
+
+// Pages Admin
+import Consultations from "./pages/admin/Consultations";
+import Dashboard from "./pages/admin/Dashboard";
+import Patients from "./pages/admin/Patients";
+import Doctors from "./pages/admin/Doctors";
+
 
 // Pages Patient
 

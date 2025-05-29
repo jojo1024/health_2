@@ -13,7 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import lomekoLogo from '/lomeko.png';
 const Header = () => {
   const { user, logout } = useAuth();
-  const [notificationsCount] = useState(3); // Hardcoded for demo
+  const [notificationsCount] = useState(0); // Hardcoded for demo
 
   const handleLogout = () => {
     logout();

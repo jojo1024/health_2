@@ -1,69 +1,71 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  UserGroupIcon,
-  ClipboardDocumentListIcon,
-  DocumentTextIcon,
   CalendarIcon,
+  ClipboardDocumentListIcon,
   ClockIcon,
-  ShieldCheckIcon
+  DocumentTextIcon,
+  ShieldCheckIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../../components/Card';
-import Badge from '../../components/Badge';
 import { useAuth } from '../../contexts/AuthContext';
-import { ReimbursementStatus } from '../../types';
+import { fetchConsultations, selectConsultations } from '../../redux/consultationSlice';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { selectConsultations, fetchConsultations, selectRecentConsultations } from '../../redux/consultationSlice';
-import { selectPatients, fetchPatients } from '../../redux/patientSlice';
+import { fetchPatients, selectPatients } from '../../redux/patientSlice';
+import { Patient } from '../../types';
 
 const DoctorDashboard = () => {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
   const consultations = useAppSelector(selectConsultations);
   const allPatients = useAppSelector(selectPatients);
-  const recentConsultations = useAppSelector(state => selectRecentConsultations(state, 5));
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [authorizedPatients, setAuthorizedPatients] = useState<any[]>([]);
+  const [authorizedPatients, setAuthorizedPatients] = useState<Patient[]>([]);
 
   const doctorId = user?.idUtilisateur;
 
   // Filtrer les consultations du médecin connecté
   const doctorConsultations = useMemo(() => {
-    if (!doctorId) return [];
-    return consultations.filter(c => c.idPatient === doctorId);
-  }, [consultations, doctorId]);
+    if (!doctorId || !user?.nomUtilisateur) return [];
+    return consultations.flatMap(patient =>
+      patient.consultations.filter(c => c.nomSoignant === user.nomUtilisateur)
+    );
+  }, [consultations, user?.nomUtilisateur]);
 
-  // Récupérer les prochains rendez-vous (à implémenter avec une vraie API)
-  const upcomingAppointments = useMemo(() => {
-    // Simuler des rendez-vous à venir
-    return doctorConsultations.slice(0, 3).map(c => ({
-      id: c.idPatient,
-      patientId: c.idPatient,
-      date: new Date(new Date().getTime() + (Math.floor(Math.random() * 7) + 1) * 86400000).toISOString(),
-      reason: "Consultation de suivi"
-    }));
+  // Calculer le nombre total de prescriptions
+  const totalPrescriptions = useMemo(() => {
+    return doctorConsultations.reduce((acc, curr) => {
+      return acc + (curr.ordonnance ? 1 : 0);
+    }, 0);
   }, [doctorConsultations]);
 
-  // Charger les données depuis l'API
+
+
+  // Mettre à jour les patients autorisés quand les consultations ou les patients changent
+  useEffect(() => {
+    if (consultations.length > 0 && allPatients.length > 0) {
+      const authorized = allPatients.filter(patient =>
+        consultations.some(p => String(p.idPatient) === String(patient.idPatient))
+      );
+      setAuthorizedPatients(authorized);
+    }
+  }, [consultations, allPatients]);
+
+  // Charger les données initiales
   useEffect(() => {
     const loadData = async () => {
+      if (!doctorId) return;
+
       setLoading(true);
       setError(null);
       try {
-        // Chargement des données
         await Promise.all([
           dispatch(fetchConsultations()),
           dispatch(fetchPatients())
         ]);
-
-        // Si doctorId est disponible, charger les patients autorisés
-        // if (doctorId) {
-        //   const patients = await AuthorizationService.getAuthorizedPatients(doctorId);
-        //   setAuthorizedPatients(patients);
-        // }
-
         setLoading(false);
       } catch (err) {
         setError('Erreur lors du chargement des données');
@@ -73,31 +75,13 @@ const DoctorDashboard = () => {
     };
 
     loadData();
-  }, [dispatch, doctorId]);
+  }, [dispatch, doctorId]); // Ne dépend que de doctorId et dispatch
 
   // Fonction pour récupérer le nom du patient
   const getPatientName = useMemo(() => (patientId: string) => {
     const patient = allPatients.find(p => p.idPatient === patientId);
-    return  'Patient inconnu';
+    return patient ? `${patient.prenomUtilisateur} ${patient.nomUtilisateur}` : 'Patient inconnu';
   }, [allPatients]);
-
-  // Fonction pour récupérer le statut du remboursement
-  const getStatusBadge = useMemo(() => (status: ReimbursementStatus) => {
-    switch (status) {
-      case ReimbursementStatus.COMPLETED:
-        return <Badge variant="success">Remboursé</Badge>;
-      case ReimbursementStatus.APPROVED:
-        return <Badge variant="primary">Approuvé</Badge>;
-      case ReimbursementStatus.PENDING:
-        return <Badge variant="warning">En attente</Badge>;
-      case ReimbursementStatus.REJECTED:
-        return <Badge variant="danger">Rejeté</Badge>;
-      case ReimbursementStatus.PARTIAL:
-        return <Badge variant="info">Partiel</Badge>;
-      default:
-        return <Badge>Inconnu</Badge>;
-    }
-  }, []);
 
   if (loading) {
     return (
@@ -151,74 +135,8 @@ const DoctorDashboard = () => {
           </div>
         </Card>
 
-        <Card className="flex items-center p-4">
-          <div className="mr-4 p-3 rounded-full bg-green-100">
-            <DocumentTextIcon className="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Prescriptions</p>
-            {/* <p className="text-2xl font-bold">{doctorConsultations.reduce((acc, curr) => acc + curr.prescriptions.length, 0)}</p> */}
-          </div>
-        </Card>
 
-        <Card className="flex items-center p-4">
-          <div className="mr-4 p-3 rounded-full bg-yellow-100">
-            <CalendarIcon className="w-6 h-6 text-yellow-600" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Rdv à venir</p>
-            <p className="text-2xl font-bold">{upcomingAppointments.length}</p>
-          </div>
-        </Card>
       </div>
-
-      {/* Upcoming Appointments */}
-      <Card
-        title="Prochains rendez-vous"
-        className="overflow-hidden"
-        footer={
-          <Link to="/doctor/appointments" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-            Voir tous les rendez-vous →
-          </Link>
-        }
-      >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motif</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {upcomingAppointments.length > 0 ? (
-                upcomingAppointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(appointment.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {/* <div className="text-sm font-medium text-gray-900">{getPatientName(appointment.patientId)}</div> */}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {appointment.reason}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
-                    Aucun rendez-vous à venir
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-  
 
       {/* Quick Links & Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -234,7 +152,7 @@ const DoctorDashboard = () => {
               </div>
             </Link>
             <Link
-              to="/doctor/consultations/new"
+              to="/doctor/consultations"
               className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center text-blue-600">
@@ -268,13 +186,17 @@ const DoctorDashboard = () => {
             <div className="space-y-3">
               {authorizedPatients.slice(0, 5).map(patient => (
                 <Link
-                  key={patient.id}
-                  to={`/doctor/patients/${patient.id}`}
+                  key={patient.idPatient}
+                  to={`/doctor/patients/${patient.idPatient}`}
                   className="flex justify-between items-center p-2 hover:bg-gray-50 rounded-md"
                 >
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{patient.firstName} {patient.lastName}</div>
-                    <div className="text-xs text-gray-500">ID: {patient.socialSecurityNumber}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {patient.prenomUtilisateur} {patient.nomUtilisateur}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      ID: {patient.idPatient}
+                    </div>
                   </div>
                   <div className="text-blue-600">
                     <ClockIcon className="h-4 w-4" />

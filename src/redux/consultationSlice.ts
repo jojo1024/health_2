@@ -213,7 +213,7 @@ export const consultationSlice = createSlice({
           state.consultations[index] = newPatient;
         } else {
           // Ajoute le nouveau patient
-          state.consultations.push(newPatient);
+          state.consultations.unshift(newPatient);
         }
       })
 

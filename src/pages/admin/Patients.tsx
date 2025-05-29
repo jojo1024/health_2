@@ -1,17 +1,18 @@
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import Button from '../components/Button';
-import Card from '../components/Card';
-import { useAppDispatch } from '../redux/hooks';
-import { createPatient, deletePatient, fetchPatients, updatePatient } from '../redux/patientSlice';
-import { RootState } from '../redux/store';
-import { Patient } from '../types';
-import ConfirmDeleteModal from './components/ConfirmDeleteModal';
-import DataTable, { Column } from './components/DataTable';
-import NewPatientModal from './components/NewPatientModal';
-import PatientDetailSlideOver from './components/PatientDetailSlideOver';
-import SearchBar from './components/SearchBar';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
+import { useAppDispatch } from '../../redux/hooks';
+import { createPatient, deletePatient, fetchPatients, updatePatient } from '../../redux/patientSlice';
+import { RootState } from '../../redux/store';
+import { Patient } from '../../types';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import DataTable, { Column } from '../components/DataTable';
+import NewPatientModal from '../components/NewPatientModal';
+import PatientDetailSlideOver from '../components/PatientDetailSlideOver';
+import SearchBar from '../components/SearchBar';
+import Notification from '../../components/Notification';
 
 const columnsData: Column<Patient>[] = [
   { label: 'Num.', render: p => p.idPatient },
@@ -21,8 +22,6 @@ const columnsData: Column<Patient>[] = [
   { label: 'G.S', render: p => p.groupeSanguinPatient },
   { label: 'Adresse', render: p => p.adressePatient },
 ];
-
-
 
 const Patients: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -37,8 +36,11 @@ const Patients: React.FC = () => {
   const [patientToEdit, setPatientToEdit] = useState<Patient | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
-
-
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const closeDetailSlideOver = () => {
     setShowPatientDetail(false);
@@ -47,8 +49,24 @@ const Patients: React.FC = () => {
 
   // Fonction pour ajouter un nouveau patient
   const handleSavePatient = (formData: Patient) => {
-    dispatch(createPatient(formData));
-    // setPatientData([...patientData, newPatient]);
+    dispatch(createPatient(formData))
+      .unwrap()
+      .then(() => {
+        setNotification({
+          message: 'Patient ajouté avec succès',
+          type: 'success'
+        });
+        setShowNewPatientModal(false);
+      })
+      .catch(() => {
+        setNotification({
+          message: 'Erreur lors de l\'ajout du patient',
+          type: 'error'
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   // Fonction pour ouvrir les détails d'un patient
@@ -73,17 +91,27 @@ const Patients: React.FC = () => {
   // Fonction pour confirmer la suppression d'un patient
   const handleConfirmDelete = () => {
     if (patientToDelete) {
-      dispatch(deletePatient(patientToDelete));
-      // setPatientData(patientData.filter(p => p.idPatient !== patientToDelete));
-      setShowDeleteConfirmModal(false);
-        closeDetailSlideOver();
-
-      // Si le patient supprimé était sélectionné, fermer les détails
-      // if (selectedPatient && selectedPatient.idPatient === patientToDelete) {
-      //   closeDetailSlideOver();
-      // }
-
-      setPatientToDelete(null);
+      setIsSubmitting(true);
+      dispatch(deletePatient(patientToDelete))
+        .unwrap()
+        .then(() => {
+          setNotification({
+            message: 'Patient supprimé avec succès',
+            type: 'success'
+          });
+          setShowDeleteConfirmModal(false);
+          closeDetailSlideOver();
+          setPatientToDelete(null);
+        })
+        .catch(() => {
+          setNotification({
+            message: 'Erreur lors de la suppression du patient',
+            type: 'error'
+          });
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+        });
     }
   };
 
@@ -96,20 +124,30 @@ const Patients: React.FC = () => {
       ...updatedPatientData
     };
 
-    dispatch(updatePatient({ data: updatedPatient }));
-
-    // setPatientData(patientData.map(p => p.idPatient === patientToEdit.idPatient ? updatedPatient : p));
-
-    // Si ce patient était sélectionné dans le SlideOver, mettre à jour les détails
-    if (selectedPatient && selectedPatient.idPatient === patientToEdit.idPatient) {
-      setSelectedPatient(updatedPatient);
-    }
-
-    setPatientToEdit(null);
-    setIsEditMode(false);
+    dispatch(updatePatient({ data: updatedPatient }))
+      .unwrap()
+      .then(() => {
+        setNotification({
+          message: 'Patient mis à jour avec succès',
+          type: 'success'
+        });
+        if (selectedPatient && selectedPatient.idPatient === patientToEdit.idPatient) {
+          setSelectedPatient(updatedPatient);
+        }
+        setPatientToEdit(null);
+        setIsEditMode(false);
+        setShowNewPatientModal(false);
+      })
+      .catch(() => {
+        setNotification({
+          message: 'Erreur lors de la mise à jour du patient',
+          type: 'error'
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
-
-
 
   const renderActions = (p: Patient) => (
     <div className="flex space-x-2">
@@ -146,13 +184,12 @@ const Patients: React.FC = () => {
 
   // Gérer le save/update en fonction du mode
   const handleSaveOrUpdatePatient = (formData: Patient) => {
+    setIsSubmitting(true);
     if (isEditMode && patientToEdit) {
       handleUpdatePatient(formData);
     } else {
       handleSavePatient(formData);
     }
-
-    setShowNewPatientModal(false);
   };
 
   // Fermer modal et réinitialiser mode d'édition
@@ -194,6 +231,13 @@ const Patients: React.FC = () => {
 
   return (
     <div className="space-y-6 p-4">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-bold">Patients</h1>
@@ -214,12 +258,6 @@ const Patients: React.FC = () => {
         <div className="mb-4">
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
         </div>
-        {/* {
-          loading && <p className="text-center text-gray-500">Chargement des patients...</p>
-        }
-        {
-          error && <p className="text-red-500 text-center">{error}</p>
-        } */}
         <DataTable
           items={filteredPatients}
           columns={columnsData}
@@ -237,6 +275,7 @@ const Patients: React.FC = () => {
           onClose={handleCloseModal}
           initialData={isEditMode && patientToEdit ? patientToEdit : undefined}
           isEditMode={isEditMode}
+          isSubmitting={isSubmitting}
         />
       )}
 
@@ -257,6 +296,7 @@ const Patients: React.FC = () => {
         onConfirm={handleConfirmDelete}
         title="Supprimer le patient"
         message={`Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible et toutes les données associées seront perdues.`}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

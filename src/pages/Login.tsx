@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import {
   LockClosedIcon,
@@ -91,14 +91,31 @@ const CountdownTimer = ({ seconds }: { seconds: number | null }) => {
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  console.log("🚀 ~ Login ~ phoneNumber:", phoneNumber)
-  const [verificationCode, setVerificationCode] = useState('');
+  const [smsCode, setSmsCode] = useState(['', '', '', '']); // Pour un code à 4 chiffres
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null, null]);
   const [formError, setFormError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false)
-  console.log("🚀 ~ Login ~ loading:", loading)
+  const [loading, setLoading] = useState(false);
+  
   const { isAuthenticated, isLoading, error, currentStep, codeExpiresIn, isCodeExpired, initiateLogin, verifyCode } = useAuth();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
+
+  // Initialiser les refs pour les inputs OTP
+  useEffect(() => {
+    inputRefs.current = inputRefs.current.slice(0, smsCode.length);
+  }, [smsCode.length]);
+
+  // Focus sur le premier input lorsque le formulaire OTP est affiché
+  useEffect(() => {
+    if (currentStep === AuthStep.CODE_VERIFICATION) {
+      setTimeout(() => {
+        const firstInput = inputRefs.current[0];
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }, 100);
+    }
+  }, [currentStep]);
 
   // Animation variants
   const containerVariants = {
@@ -132,6 +149,71 @@ const Login = () => {
     setPhoneNumber(formatPhoneNumber(input));
   };
 
+  // Gestionnaire de changement pour les champs OTP
+  const handleCodeChange = (index: number, value: string) => {
+    // Ne prendre que les chiffres
+    const newValue = value.replace(/\D/g, '');
+    
+    if (newValue.length <= 1) {
+      // Mettre à jour le code SMS
+      const newCode = [...smsCode];
+      newCode[index] = newValue;
+      setSmsCode(newCode);
+      
+      // Passer au champ suivant si une valeur est entrée et qu'il y a un champ suivant
+      if (newValue && index < smsCode.length - 1) {
+        const nextInput = inputRefs.current[index + 1];
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }
+    }
+  };
+
+  // Gestionnaire pour les touches spéciales (suppression, flèches, etc.)
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !smsCode[index] && index > 0) {
+      // Si backspace est pressé et que le champ actuel est vide, aller au champ précédent
+      const prevInput = inputRefs.current[index - 1];
+      if (prevInput) {
+        prevInput.focus();
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      // Naviguer vers la gauche
+      const prevInput = inputRefs.current[index - 1];
+      if (prevInput) {
+        prevInput.focus();
+      }
+    } else if (e.key === 'ArrowRight' && index < smsCode.length - 1) {
+      // Naviguer vers la droite
+      const nextInput = inputRefs.current[index + 1];
+      if (nextInput) {
+        nextInput.focus();
+      }
+    }
+  };
+
+  // Gestionnaire de collage pour le premier champ OTP
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text/plain').replace(/\D/g, '');
+    
+    if (pastedData) {
+      const newCode = [...smsCode];
+      for (let i = 0; i < Math.min(pastedData.length, smsCode.length); i++) {
+        newCode[i] = pastedData[i];
+      }
+      setSmsCode(newCode);
+      
+      // Mettre le focus sur le dernier champ rempli ou le suivant
+      const focusIndex = Math.min(pastedData.length, smsCode.length - 1);
+      const targetInput = inputRefs.current[focusIndex];
+      if (targetInput) {
+        targetInput.focus();
+      }
+    }
+  };
+
   const handlePhoneSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -139,12 +221,6 @@ const Login = () => {
       setFormError('Veuillez entrer votre numéro de téléphone');
       return;
     }
-
-    // Validation améliorée du numéro de téléphone
-    // if (!isValidPhoneNumber(phoneNumber)) {
-    //   setFormError('Format du numéro de téléphone invalide. Utilisez un format français (06 12 34 56 78) ou international (+33 6 12 34 56 78)');
-    //   return;
-    // }
 
     setFormError(null);
     try {
@@ -165,15 +241,18 @@ const Login = () => {
   const handleCodeSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!verificationCode.trim()) {
-      setFormError('Veuillez entrer le code de vérification');
+    // Vérifier si tous les champs sont remplis
+    if (smsCode.some(digit => !digit.trim())) {
+      setFormError('Veuillez saisir le code complet');
       return;
     }
 
+    const combinedCode = smsCode.join('');
     setFormError(null);
+    
     try {
       setLoading(true);
-      const success = await verifyCode(verificationCode);
+      const success = await verifyCode(combinedCode);
       if (!success) {
         setFormError('Code de vérification incorrect');
       }
@@ -186,7 +265,14 @@ const Login = () => {
 
   // Fonction pour revenir à l'étape du numéro de téléphone
   const handleBackToPhone = () => {
+    setSmsCode(['', '', '', '']); // Réinitialiser le code SMS
     initiateLogin(phoneNumber); // Réinitialiser à l'étape du téléphone
+  };
+
+  // Fonction pour demander un nouveau code
+  const handleRequestNewCode = () => {
+    setSmsCode(['', '', '', '']); // Réinitialiser le code SMS
+    initiateLogin(phoneNumber);
   };
 
   // Rediriger si l'utilisateur est authentifié
@@ -196,7 +282,7 @@ const Login = () => {
 
   // Afficher le formulaire de numéro de téléphone ou de vérification de code en fonction de l'étape actuelle
   return (
-    <div className=" flex items-center h-[100vh] justify-center bg-gray-50   px-4 sm:px-6 lg:px-8">
+    <div className="flex items-center h-[100vh] justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
       <motion.div
         className="max-w-md w-full space-y-8"
         initial={{ opacity: 0, y: 30 }}
@@ -283,11 +369,7 @@ const Login = () => {
                     disabled={isLoading}
                   />
                 </div>
-                {/* <p className="mt-2 text-sm text-gray-500">
-                  Formats acceptés: 06 12 34 56 78 ou +33 6 12 34 56 78
-                </p> */}
               </motion.div>
-
 
               <motion.div variants={itemVariants}>
                 <button
@@ -334,27 +416,31 @@ const Login = () => {
               </motion.div>
 
               <motion.div variants={itemVariants}>
-                <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
                   Code de vérification
                 </label>
-                <div className="mt-1">
-                  <input
-                    id="verificationCode"
-                    name="verificationCode"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    required
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="123456"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
-                    disabled={isLoading || isCodeExpired}
-                    autoFocus
-                  />
+                
+                {/* Champs OTP pour la saisie du code */}
+                <div className="flex justify-center space-x-2 mb-4">
+                  {smsCode.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => { inputRefs.current[index] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onPaste={index === 0 ? handlePaste : undefined}
+                      className="w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      disabled={isLoading || isCodeExpired}
+                    />
+                  ))}
                 </div>
+                
                 <p className="mt-2 text-sm text-gray-500">
-                  Saisissez le code à 6 chiffres envoyé par SMS
+                  Saisissez le code à 4 chiffres envoyé par SMS
                 </p>
 
                 {/* Ajout du compte à rebours */}
@@ -395,7 +481,7 @@ const Login = () => {
                 <button
                   type="button"
                   className="text-sm text-blue-600 hover:text-blue-500"
-                  onClick={() => initiateLogin(phoneNumber)}
+                  onClick={handleRequestNewCode}
                   disabled={isLoading}
                 >
                   {isCodeExpired ? 'Demander un nouveau code' : 'Recevoir un nouveau code'}
@@ -404,66 +490,6 @@ const Login = () => {
             </motion.form>
           )}
         </AnimatePresence>
-
-        {/* <motion.div
-          className="mt-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-        >
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">
-                Numéros de téléphone de démonstration
-              </span>
-            </div>
-          </div>
-          
-          <motion.div
-            className="mt-6 grid grid-cols-2 gap-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
-          >
-            {users.map((user, index) => (
-              <motion.div
-                key={user.id}
-                className="cursor-pointer rounded-md border border-gray-300 bg-white py-2 px-3 hover:bg-gray-50"
-                onClick={() => {
-                  setPhoneNumber(user.phoneNumber);
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  transition: {
-                    delay: 0.8 + index * 0.1
-                  }
-                }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <img
-                      className="h-8 w-8 rounded-full"
-                      src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.username}`}
-                      alt=""
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-gray-900">{user.username}</p>
-                    <p className="truncate text-sm text-gray-500">{user.phoneNumber}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
-        </motion.div> */}
       </motion.div>
     </div>
   );

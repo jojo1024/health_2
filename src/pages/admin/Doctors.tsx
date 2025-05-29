@@ -1,17 +1,18 @@
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import React, { useState, useEffect } from 'react';
-import Button from '../components/Button';
-import Card from '../components/Card';
-import DataTable, { Column } from './components/DataTable';
-import SearchBar from './components/SearchBar';
-import ConfirmDeleteModal from './components/ConfirmDeleteModal';
-import NewDoctorModal from './components/NewDoctorModal';
-import DoctorDetailSlideOver from './components/DoctorDetailSlideOver';
-import { Doctor } from '../types';
-import { useAppDispatch } from '../redux/hooks';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
+import DataTable, { Column } from '../components/DataTable';
+import SearchBar from '../components/SearchBar';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import NewDoctorModal from '../components/NewDoctorModal';
+import DoctorDetailSlideOver from '../components/DoctorDetailSlideOver';
+import { Doctor } from '../../types';
+import { useAppDispatch } from '../../redux/hooks';
 import { useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
-import { createDoctor, deleteDoctor, fetchDoctors, updateDoctor } from '../redux/doctorSlice';
+import { RootState } from '../../redux/store';
+import { createDoctor, deleteDoctor, fetchDoctors, updateDoctor } from '../../redux/doctorSlice';
+import Notification from '../../components/Notification';
 
 // Définition des colonnes pour le tableau
 const columnsData: Column<Doctor>[] = [
@@ -38,6 +39,11 @@ const Doctors: React.FC = () => {
   const [doctorToEdit, setDoctorToEdit] = useState<Doctor | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [doctorToDelete, setDoctorToDelete] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
 
@@ -48,7 +54,25 @@ const Doctors: React.FC = () => {
 
   // Fonction pour ajouter un nouveau médecin
   const handleSaveDoctor = (formData: Doctor) => {
+    setIsSubmitting(true);
     dispatch(createDoctor(formData))
+      .unwrap()
+      .then(() => {
+        setNotification({
+          message: 'Médecin ajouté avec succès',
+          type: 'success'
+        });
+        setShowNewDoctorModal(false);
+      })
+      .catch(() => {
+        setNotification({
+          message: 'Erreur lors de l\'ajout du médecin',
+          type: 'error'
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   // Fonction pour ouvrir les détails d'un médecin
@@ -73,16 +97,29 @@ const Doctors: React.FC = () => {
   // Fonction pour confirmer la suppression d'un médecin
   const handleConfirmDelete = () => {
     if (doctorToDelete) {
-
-      dispatch(deleteDoctor(doctorToDelete));
-      setShowDeleteConfirmModal(false);
-
-      // Si le médecin supprimé était sélectionné, fermer les détails
-      if (selectedDoctor && selectedDoctor.idPersSoignant === doctorToDelete) {
-        closeDetailSlideOver();
-      }
-
-      setDoctorToDelete(null);
+      setIsSubmitting(true);
+      dispatch(deleteDoctor(doctorToDelete))
+        .unwrap()
+        .then(() => {
+          setNotification({
+            message: 'Médecin supprimé avec succès',
+            type: 'success'
+          });
+          setShowDeleteConfirmModal(false);
+          if (selectedDoctor && selectedDoctor.idPersSoignant === doctorToDelete) {
+            closeDetailSlideOver();
+          }
+          setDoctorToDelete(null);
+        })
+        .catch(() => {
+          setNotification({
+            message: 'Erreur lors de la suppression du médecin',
+            type: 'error'
+          });
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+        });
     }
   };
 
@@ -90,21 +127,35 @@ const Doctors: React.FC = () => {
   const handleUpdateDoctor = (updatedDoctorData: Doctor) => {
     if (!doctorToEdit) return;
 
+    setIsSubmitting(true);
     const updatedDoctor: Doctor = {
       ...doctorToEdit,
       ...updatedDoctorData,
     };
 
-    dispatch(updateDoctor({ data: updatedDoctor }));
-
-
-    // Si ce médecin était sélectionné dans le SlideOver, mettre à jour les détails
-    if (selectedDoctor && selectedDoctor.idPersSoignant === doctorToEdit.idPersSoignant) {
-      setSelectedDoctor(updatedDoctor);
-    }
-
-    setDoctorToEdit(null);
-    setIsEditMode(false);
+    dispatch(updateDoctor({ data: updatedDoctor }))
+      .unwrap()
+      .then(() => {
+        setNotification({
+          message: 'Médecin mis à jour avec succès',
+          type: 'success'
+        });
+        if (selectedDoctor && selectedDoctor.idPersSoignant === doctorToEdit.idPersSoignant) {
+          setSelectedDoctor(updatedDoctor);
+        }
+        setDoctorToEdit(null);
+        setIsEditMode(false);
+        setShowNewDoctorModal(false);
+      })
+      .catch(() => {
+        setNotification({
+          message: 'Erreur lors de la mise à jour du médecin',
+          type: 'error'
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   const renderActions = (d: Doctor) => (
@@ -185,6 +236,13 @@ const Doctors: React.FC = () => {
 
   return (
     <div className="space-y-6 p-4">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-bold">Médecins</h1>
@@ -222,6 +280,7 @@ const Doctors: React.FC = () => {
           onClose={handleCloseModal}
           initialData={isEditMode && doctorToEdit ? doctorToEdit : undefined}
           isEditMode={isEditMode}
+          isSubmitting={isSubmitting}
         />
       )}
 
@@ -242,6 +301,7 @@ const Doctors: React.FC = () => {
         onConfirm={handleConfirmDelete}
         title="Supprimer le médecin"
         message={`Êtes-vous sûr de vouloir supprimer ce médecin ? Cette action est irréversible et toutes les données associées seront perdues.`}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

@@ -7,13 +7,27 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline';
 
-import Card from '../components/Card';
+import Card from '../../components/Card';
+import { useEffect } from 'react';
+import { fetchPatients } from '../../redux/patientSlice';
+import { useAppDispatch } from '../../redux/hooks';
+import { fetchDoctors } from '../../redux/doctorSlice';
+import { fetchConsultations } from '../../redux/consultationSlice';
 import { useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
+import { RootState } from '../../redux/store';
 
 const Dashboard = () => {
 
-  
+  const dispatch = useAppDispatch();
+  const patients = useSelector((state: RootState) => state.patients.patients);
+  const doctors = useSelector((state: RootState) => state.doctors.doctors);
+  const consultations = useSelector((state: RootState) => state.consultations.consultations);
+
+  useEffect(() => {
+    dispatch(fetchPatients());
+    dispatch(fetchDoctors());
+    dispatch(fetchConsultations());
+  }, [dispatch]);
 
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 max-w-full">
@@ -30,7 +44,7 @@ const Dashboard = () => {
           </div>
           <div>
             <p className="text-xs sm:text-sm font-medium text-gray-500">Patients</p>
-            <p className="text-lg sm:text-2xl font-bold">0</p>
+            <p className="text-lg sm:text-2xl font-bold">{patients.length}</p>
           </div>
         </Card>
 
@@ -40,7 +54,7 @@ const Dashboard = () => {
           </div>
           <div>
             <p className="text-xs sm:text-sm font-medium text-gray-500">Médecins</p>
-            <p className="text-lg sm:text-2xl font-bold">0</p>
+            <p className="text-lg sm:text-2xl font-bold">{doctors.length}</p>
           </div>
         </Card>
 
@@ -50,19 +64,10 @@ const Dashboard = () => {
           </div>
           <div>
             <p className="text-xs sm:text-sm font-medium text-gray-500">Consultations</p>
-            <p className="text-lg sm:text-2xl font-bold">0</p>
+            <p className="text-lg sm:text-2xl font-bold">{consultations.length}</p>
           </div>
         </Card>
 
-        <Card className="flex items-center p-2 sm:p-4">
-          <div className="mr-2 sm:mr-4 p-2 sm:p-3 rounded-full bg-yellow-100">
-            <ClockIcon className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-600" />
-          </div>
-          <div>
-            <p className="text-xs sm:text-sm font-medium text-gray-500">Remb.</p>
-            <p className="text-lg sm:text-2xl font-bold">0</p>
-          </div>
-        </Card>
       </div>
 
 

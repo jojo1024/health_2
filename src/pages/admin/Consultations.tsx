@@ -1,18 +1,18 @@
 // Consultation.tsx - Avec intégration du système d'autorisation
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import Card from '../components/Card';
-import { fetchConsultations } from '../redux/consultationSlice';
-import { useAppDispatch } from '../redux/hooks';
-import { RootState } from '../redux/store';
-import { ConsultationRegroupee, PatientAvecConsultations } from '../types';
-import AuthDialog from './components/AuthDialog';
-import ConfirmDeleteModal from './components/ConfirmDeleteModal';
-import DataTable, { Column } from './components/DataTable';
-import NewConsultationModal from './components/NewConsultationModal';
-import PatientConsultationDetailSlideOver from './components/PatientConsultationDetailSlideOver';
-import PatientDetailSlideOver2 from './components/PatientDetailSlideOver2';
-import SearchBar from './components/SearchBar';
+import Card from '../../components/Card';
+import { fetchConsultations } from '../../redux/consultationSlice';
+import { useAppDispatch } from '../../redux/hooks';
+import { RootState } from '../../redux/store';
+import { ConsultationRegroupee, PatientAvecConsultations } from '../../types';
+import AuthDialog from '../components/AuthDialog';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import DataTable, { Column } from '../components/DataTable';
+import NewConsultationModal from '../components/NewConsultationModal';
+import PatientConsultationDetailSlideOver from '../components/PatientConsultationDetailSlideOver';
+import PatientDetailSlideOver2 from '../components/PatientDetailSlideOver2';
+import SearchBar from '../components/SearchBar';
 
 
 
@@ -51,6 +51,7 @@ const Consultation: React.FC = () => {
   const [patientToEdit, setPatientToEdit] = useState<PatientAvecConsultations | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [consultationToDelete, setConsultationToDelete] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Nouvel état pour gérer les actions en attente après authentification
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -184,6 +185,7 @@ const Consultation: React.FC = () => {
   // Fonction pour confirmer la suppression
   const handleConfirmDelete = () => {
     if (consultationToDelete) {
+      setIsSubmitting(true);
       // setPatientData(patientData.filter(p => p.id !== consultationToDelete));
       setShowDeleteConfirmModal(false);
 
@@ -193,6 +195,7 @@ const Consultation: React.FC = () => {
       }
 
       setConsultationToDelete(null);
+      setIsSubmitting(false);
     }
   };
 
@@ -355,6 +358,7 @@ const Consultation: React.FC = () => {
         onConfirm={handleConfirmDelete}
         title="Supprimer le patient"
         message={`Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible et toutes les données associées seront perdues.`}
+        isSubmitting={isSubmitting}
       />
     </div>
   );
